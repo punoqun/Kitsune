@@ -51,6 +51,22 @@ class KitsuHtmlToMarkdownConverterTest {
     }
 
     @Test
+    fun `styled edge whitespace is moved outside markdown delimiters`() {
+        val markdown = KitsuHtmlToMarkdownConverter.convert(
+            "<p>Before<b>   bold   </b><em> italic </em><del> deleted </del>after</p>"
+        )
+
+        assertThat(markdown).isEqualTo("Before **bold**  _italic_  ~~deleted~~ after")
+    }
+
+    @Test
+    fun `all whitespace styled content remains one collapsible space`() {
+        val markdown = KitsuHtmlToMarkdownConverter.convert("<p>Before<b>   </b>after</p>")
+
+        assertThat(markdown).isEqualTo("Before after")
+    }
+
+    @Test
     fun `italic and emphasis render with underscores`() {
         assertThat(KitsuHtmlToMarkdownConverter.convert("<p><em>italic</em></p>"))
             .isEqualTo("_italic_")
@@ -73,6 +89,15 @@ class KitsuHtmlToMarkdownConverterTest {
         )
 
         assertThat(markdown).isEqualTo("See [Kitsu](https://kitsu.app)")
+    }
+
+    @Test
+    fun `link edge whitespace is moved outside link delimiters`() {
+        val markdown = KitsuHtmlToMarkdownConverter.convert(
+            """<p>See<a href="https://kitsu.app">   <b> Kitsu </b>   </a>now</p>"""
+        )
+
+        assertThat(markdown).isEqualTo("See [**Kitsu**](https://kitsu.app) now")
     }
 
     @Test
@@ -146,6 +171,27 @@ class KitsuHtmlToMarkdownConverterTest {
     }
 
     @Test
+    fun `superscript converts supported characters and preserves unsupported ones`() {
+        val markdown = KitsuHtmlToMarkdownConverter.convert("<p>x<sup>TM2q?</sup></p>")
+
+        assertThat(markdown).isEqualTo("xᵀᴹ²q?")
+    }
+
+    @Test
+    fun `nested superscript does not corrupt converted characters`() {
+        val markdown = KitsuHtmlToMarkdownConverter.convert("<p>Reviews<sup><sup>TM</sup></sup></p>")
+
+        assertThat(markdown).isEqualTo("Reviewsᵀᴹ")
+    }
+
+    @Test
+    fun `subscript converts supported characters and preserves unsupported ones`() {
+        val markdown = KitsuHtmlToMarkdownConverter.convert("<p>H<sub>2Oq?</sub></p>")
+
+        assertThat(markdown).isEqualTo("H₂Oq?")
+    }
+
+    @Test
     fun `fenced code block preserves whitespace and is not escaped`() {
         val markdown = KitsuHtmlToMarkdownConverter.convert(
             "<pre><code class=\"language-kotlin\">fun main() {\n    print(\"*hi*\")\n}</code></pre>"
@@ -202,5 +248,32 @@ class KitsuHtmlToMarkdownConverterTest {
                 "Check it out: [https://kitsu\\.app/anime/example](https://kitsu.app/anime/example)" +
                 "\n\n![](https://media.kitsu.app/example.jpg)"
         )
+    }
+
+    @Test
+    fun `post 9132616 preserves styled links superscript breaks and scores`() {
+        val html = """
+            <p><a href="https://kitsu.io/posts/9525936"><strong>Reading the WTR: Summer Cleaning</strong></a></p>
+            <p><b>        LtKenny’s Spoiler-Free Reviews<sup><sup>TM</sup></sup></b></p>
+            <p><b>Anime:</b><br>
+            <a href="https://kitsu.io/posts/9117094">    <b>Darling in the FRANXXX</b></a>: <code> 8/10</code></p>
+            <p><b>Manga</b><br>
+            <a href="https://kitsu.io/posts/9257380">    <b> Veggie Hot Bun’s School Spring Holidayl</b></a>: <code> 9.5/10</code></p>
+        """.trimIndent()
+
+        val markdown = KitsuHtmlToMarkdownConverter.convert(html)
+
+        assertThat(markdown).contains("**LtKenny’s Spoiler\\-Free Reviewsᵀᴹ**")
+        assertThat(markdown).contains(
+            " [**Darling in the FRANXXX**](https://kitsu.io/posts/9117094): `8/10`"
+        )
+        assertThat(markdown).contains(
+            " [**Veggie Hot Bun’s School Spring Holidayl**]" +
+                "(https://kitsu.io/posts/9257380): `9.5/10`"
+        )
+        assertThat(markdown).contains("**Anime:**  \n")
+        assertThat(markdown).contains("**Manga**  \n")
+        assertThat(markdown).doesNotContain("** LtKenny")
+        assertThat(markdown).doesNotContain("** Veggie")
     }
 }

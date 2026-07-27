@@ -36,6 +36,31 @@ object KitsuHtmlToMarkdownConverter {
 
     private val WHITESPACE_REGEX = Regex("\\s+")
 
+    private val SUPERSCRIPT_CHARACTERS = mapOf(
+        '0' to '⁰', '1' to '¹', '2' to '²', '3' to '³', '4' to '⁴',
+        '5' to '⁵', '6' to '⁶', '7' to '⁷', '8' to '⁸', '9' to '⁹',
+        '+' to '⁺', '-' to '⁻', '=' to '⁼', '(' to '⁽', ')' to '⁾',
+        'a' to 'ᵃ', 'b' to 'ᵇ', 'c' to 'ᶜ', 'd' to 'ᵈ', 'e' to 'ᵉ',
+        'f' to 'ᶠ', 'g' to 'ᵍ', 'h' to 'ʰ', 'i' to 'ⁱ', 'j' to 'ʲ',
+        'k' to 'ᵏ', 'l' to 'ˡ', 'm' to 'ᵐ', 'n' to 'ⁿ', 'o' to 'ᵒ',
+        'p' to 'ᵖ', 'r' to 'ʳ', 's' to 'ˢ', 't' to 'ᵗ', 'u' to 'ᵘ',
+        'v' to 'ᵛ', 'w' to 'ʷ', 'x' to 'ˣ', 'y' to 'ʸ', 'z' to 'ᶻ',
+        'A' to 'ᴬ', 'B' to 'ᴮ', 'D' to 'ᴰ', 'E' to 'ᴱ', 'G' to 'ᴳ',
+        'H' to 'ᴴ', 'I' to 'ᴵ', 'J' to 'ᴶ', 'K' to 'ᴷ', 'L' to 'ᴸ',
+        'M' to 'ᴹ', 'N' to 'ᴺ', 'O' to 'ᴼ', 'P' to 'ᴾ', 'R' to 'ᴿ',
+        'T' to 'ᵀ', 'U' to 'ᵁ', 'V' to 'ⱽ', 'W' to 'ᵂ'
+    )
+
+    private val SUBSCRIPT_CHARACTERS = mapOf(
+        '0' to '₀', '1' to '₁', '2' to '₂', '3' to '₃', '4' to '₄',
+        '5' to '₅', '6' to '₆', '7' to '₇', '8' to '₈', '9' to '₉',
+        '+' to '₊', '-' to '₋', '=' to '₌', '(' to '₍', ')' to '₎',
+        'a' to 'ₐ', 'e' to 'ₑ', 'h' to 'ₕ', 'i' to 'ᵢ', 'j' to 'ⱼ',
+        'k' to 'ₖ', 'l' to 'ₗ', 'm' to 'ₘ', 'n' to 'ₙ', 'o' to 'ₒ',
+        'p' to 'ₚ', 'r' to 'ᵣ', 's' to 'ₛ', 't' to 'ₜ', 'u' to 'ᵤ',
+        'v' to 'ᵥ', 'x' to 'ₓ'
+    )
+
     /**
      * Converts [html] (Kitsu's `contentFormatted`) to Markdown. Returns an empty string for null
      * or blank input.
@@ -245,6 +270,8 @@ object KitsuHtmlToMarkdownConverter {
             "strong", "b" -> wrapInline(element, sb, "**")
             "em", "i" -> wrapInline(element, sb, "_")
             "del", "s", "strike" -> wrapInline(element, sb, "~~")
+            "sup" -> renderScript(element, sb, SUPERSCRIPT_CHARACTERS)
+            "sub" -> renderScript(element, sb, SUBSCRIPT_CHARACTERS)
             "code" -> renderInlineCode(element, sb)
             "br" -> sb.append("  \n")
             "a" -> renderLink(element, sb)
@@ -265,8 +292,18 @@ object KitsuHtmlToMarkdownConverter {
 
     private fun wrapInline(element: Element, sb: StringBuilder, marker: String) {
         val inner = renderInlineChildren(element)
-        if (inner.isEmpty()) return
-        sb.append(marker).append(inner).append(marker)
+        appendWrappedInline(sb, inner, marker, marker)
+    }
+
+    private fun renderScript(
+        element: Element,
+        sb: StringBuilder,
+        characterMap: Map<Char, Char>
+    ) {
+        val inner = renderInlineChildren(element)
+        for (character in inner) {
+            sb.append(characterMap[character] ?: character)
+        }
     }
 
     private fun renderInlineCode(element: Element, sb: StringBuilder) {
@@ -294,7 +331,7 @@ object KitsuHtmlToMarkdownConverter {
             sb.append(text)
             return
         }
-        sb.append('[').append(text).append("](").append(formatUrl(href)).append(')')
+        appendWrappedInline(sb, text, "[", "](${formatUrl(href)})")
     }
 
     private fun renderImage(element: Element, sb: StringBuilder) {
@@ -313,6 +350,32 @@ object KitsuHtmlToMarkdownConverter {
     private fun List<Node>.singleOrNullSignificant(): Node? {
         val significant = filter { it !is TextNode || it.text().isNotBlank() }
         return significant.singleOrNull()
+    }
+
+    /**
+     * CommonMark delimiters cannot open or close next to whitespace. HTML has no such restriction,
+     * so move collapsible edge whitespace outside generated emphasis/link delimiters.
+     */
+    private fun appendWrappedInline(
+        sb: StringBuilder,
+        content: String,
+        opening: String,
+        closing: String
+    ) {
+        if (content.isEmpty()) return
+
+        val firstContentIndex = content.indexOfFirst { !it.isWhitespace() }
+        if (firstContentIndex == -1) {
+            sb.append(' ')
+            return
+        }
+        val lastContentIndex = content.indexOfLast { !it.isWhitespace() }
+
+        if (firstContentIndex > 0) sb.append(' ')
+        sb.append(opening)
+            .append(content, firstContentIndex, lastContentIndex + 1)
+            .append(closing)
+        if (lastContentIndex < content.lastIndex) sb.append(' ')
     }
 
     // endregion
