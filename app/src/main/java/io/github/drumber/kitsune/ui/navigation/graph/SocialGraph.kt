@@ -24,6 +24,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.algolia.instantsearch.core.connection.ConnectionHandler
@@ -75,7 +76,12 @@ fun NavGraphBuilder.socialGraph(navController: NavHostController) {
     composable<Routes.Feed> { backStackEntry ->
         FeedDestination(backStackEntry, navController)
     }
-    composable<Routes.PostDetail> { backStackEntry ->
+    composable<Routes.PostDetail>(
+        deepLinks = listOf(
+            navDeepLink { uriPattern = "https://kitsu.app/posts/{postId}" },
+            navDeepLink { uriPattern = "http://kitsu.app/posts/{postId}" }
+        )
+    ) { backStackEntry ->
         PostDetailDestination(backStackEntry, navController)
     }
     composable<Routes.Replies> { backStackEntry ->
@@ -203,6 +209,15 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
                 ))
             }
         },
+        onImageClick = { imageUrls, index ->
+            navController.navigateSafe(
+                Routes.PhotoView(
+                    imageUrl = imageUrls[index],
+                    imageUrls = imageUrls,
+                    initialIndex = index
+                )
+            )
+        },
         onEditClick = { post -> navController.navigateSafe(Routes.CreatePost(editPostId = post.id)) },
         onDeleteClick = { post, page ->
             if (page == 0) globalVm.deletePost(post) else followingVm.deletePost(post)
@@ -302,6 +317,15 @@ private fun PostDetailDestination(
                     slug = slug
                 ))
             }
+        },
+        onImageClick = { imageUrls, index ->
+            navController.navigateSafe(
+                Routes.PhotoView(
+                    imageUrl = imageUrls[index],
+                    imageUrls = imageUrls,
+                    initialIndex = index
+                )
+            )
         },
         onEditPost = { p -> navController.navigateSafe(Routes.CreatePost(editPostId = p.id)) },
         onDeletePost = { viewModel.deletePost() },
@@ -608,6 +632,15 @@ private fun GroupEmbeddedFeedContent(
                     slug = slug
                 ))
             }
+        },
+        onImageClick = { imageUrls, index ->
+            navController.navigateSafe(
+                Routes.PhotoView(
+                    imageUrl = imageUrls[index],
+                    imageUrls = imageUrls,
+                    initialIndex = index
+                )
+            )
         },
         onEditClick = { post -> navController.navigateSafe(Routes.CreatePost(editPostId = post.id)) },
         onDeleteClick = { post -> feedVm.deletePost(post) },

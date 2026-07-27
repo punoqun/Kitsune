@@ -59,6 +59,7 @@ fun FeedListScreen(
     onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteClick: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
@@ -101,6 +102,7 @@ fun FeedListScreen(
                     onLikeClick = onLikeClick,
                     onRevealClick = onRevealClick,
                     onMediaClick = onMediaClick,
+                    onImageClick = onImageClick,
                     onEditClick = onEditClick,
                     onDeleteRequest = { postToDelete = it },
                     onAuthorClick = onAuthorClick
@@ -142,6 +144,7 @@ private fun FeedPostColumn(
     onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteRequest: (Post) -> Unit,
     onAuthorClick: (String) -> Unit
@@ -175,6 +178,7 @@ private fun FeedPostColumn(
                         onLikeClick = onLikeClick,
                         onRevealClick = onRevealClick,
                         onMediaClick = onMediaClick,
+                        onImageClick = onImageClick,
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
                         onAuthorClick = onAuthorClick
@@ -193,6 +197,7 @@ private fun FeedPostColumn(
                         onLikeClick = onLikeClick,
                         onRevealClick = onRevealClick,
                         onMediaClick = onMediaClick,
+                        onImageClick = onImageClick,
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
                         onAuthorClick = onAuthorClick

@@ -207,6 +207,9 @@ dependencies {
     implementation(libs.mikepenz.markdown.renderer.m3)
     implementation(libs.mikepenz.markdown.renderer.coil3)
 
+    // Ksoup (Kotlin Multiplatform HTML parser, used to convert Kitsu's HTML content to Markdown)
+    implementation(libs.ksoup)
+
     // Koin DI
     implementation(libs.insert.koin.android)
 

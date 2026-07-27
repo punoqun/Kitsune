@@ -1,12 +1,16 @@
 package io.github.drumber.kitsune.ui.feed.compose
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,6 +72,7 @@ fun PostCard(
     onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteClick: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
@@ -96,7 +102,8 @@ fun PostCard(
         } else {
             PostContentBody(
                 post = post,
-                onMediaClick = onMediaClick
+                onMediaClick = onMediaClick,
+                onImageClick = onImageClick
             )
         }
         Spacer(Modifier.height(8.dp))
@@ -197,7 +204,8 @@ private fun PostContentWarning(isNsfw: Boolean, onReveal: () -> Unit) {
 @Composable
 private fun PostContentBody(
     post: Post,
-    onMediaClick: (Post) -> Unit
+    onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit
 ) {
     if (!post.contentFormatted.isNullOrBlank() || !post.content.isNullOrBlank()) {
         MarkdownText(
@@ -208,7 +216,10 @@ private fun PostContentBody(
     }
     if (post.imageUrls.isNotEmpty()) {
         Spacer(Modifier.height(8.dp))
-        PostImagePreview(imageUrls = post.imageUrls)
+        PostImagePreview(
+            imageUrls = post.imageUrls,
+            onImageClick = { index -> onImageClick(post.imageUrls, index) }
+        )
     }
     val embed = post.embed
     if (embed != null && (!embed.imageUrl.isNullOrBlank() || !embed.title.isNullOrBlank())) {
@@ -222,25 +233,117 @@ private fun PostContentBody(
 }
 
 @Composable
-private fun PostImagePreview(imageUrls: List<String>) {
-    AsyncImage(
-        model = imageUrls.first(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        placeholder = painterResource(R.drawable.ic_insert_photo_48),
-        error = painterResource(R.drawable.ic_insert_photo_48),
+private fun PostImagePreview(
+    imageUrls: List<String>,
+    onImageClick: (Int) -> Unit
+) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(16f / 9f)
             .clip(RoundedCornerShape(12.dp))
-    )
-    if (imageUrls.size > 1) {
-        Text(
-            text = stringResource(R.string.feed_image_count_more, imageUrls.size - 1),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp)
+    ) {
+        when (imageUrls.size) {
+            1 -> PostPreviewImage(
+                imageUrl = imageUrls[0],
+                index = 0,
+                onClick = onImageClick,
+                modifier = Modifier.fillMaxSize()
+            )
+            2 -> Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                imageUrls.forEachIndexed { index, imageUrl ->
+                    PostPreviewImage(
+                        imageUrl = imageUrl,
+                        index = index,
+                        onClick = onImageClick,
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
+                }
+            }
+            3 -> Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                PostPreviewImage(
+                    imageUrl = imageUrls[0],
+                    index = 0,
+                    onClick = onImageClick,
+                    modifier = Modifier.weight(1f).fillMaxHeight()
+                )
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    imageUrls.drop(1).forEachIndexed { offset, imageUrl ->
+                        PostPreviewImage(
+                            imageUrl = imageUrl,
+                            index = offset + 1,
+                            onClick = onImageClick,
+                            modifier = Modifier.weight(1f).fillMaxWidth()
+                        )
+                    }
+                }
+            }
+            else -> Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                imageUrls.take(4).chunked(2).forEachIndexed { rowIndex, rowImages ->
+                    Row(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        rowImages.forEachIndexed { columnIndex, imageUrl ->
+                            val index = rowIndex * 2 + columnIndex
+                            PostPreviewImage(
+                                imageUrl = imageUrl,
+                                index = index,
+                                remainingCount = if (index == 3) imageUrls.size - 4 else 0,
+                                onClick = onImageClick,
+                                modifier = Modifier.weight(1f).fillMaxHeight()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PostPreviewImage(
+    imageUrl: String,
+    index: Int,
+    onClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    remainingCount: Int = 0
+) {
+    Box(modifier = modifier.clickable { onClick(index) }) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_insert_photo_48),
+            error = painterResource(R.drawable.ic_insert_photo_48),
+            modifier = Modifier.fillMaxSize()
         )
+        if (remainingCount > 0) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.Black.copy(alpha = 0.55f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.feed_image_count_more, remainingCount),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 

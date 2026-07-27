@@ -8,7 +8,11 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
@@ -45,14 +49,19 @@ private fun PhotoViewDestination(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val imageUrls = remember(route.imageUrl, route.imageUrls) {
+        route.imageUrls.ifEmpty { listOf(route.imageUrl) }
+    }
+    val initialIndex = route.initialIndex.coerceIn(imageUrls.indices)
+    var pendingSaveUrl by remember { mutableStateOf(route.imageUrl) }
 
     val savedMessage = stringResource(R.string.info_image_saved_in_gallery)
     val errorMessage = stringResource(R.string.error_image_loading)
     val permissionMessage = stringResource(R.string.error_requires_external_storage_permission)
 
-    val saveImage: () -> Unit = {
+    val saveImage: (String) -> Unit = { imageUrl ->
         scope.launch(Dispatchers.IO) {
-            val request = ImageRequest.Builder(context).data(route.imageUrl).build()
+            val request = ImageRequest.Builder(context).data(imageUrl).build()
             val bitmap = when (val result = SingletonImageLoader.get(context).execute(request)) {
                 is SuccessResult -> result.image.toBitmap()
                 is ErrorResult -> {
@@ -76,24 +85,25 @@ private fun PhotoViewDestination(
                 ).show()
             }
         }
-        Unit
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            saveImage()
+            saveImage(pendingSaveUrl)
         } else {
             Toast.makeText(context, permissionMessage, Toast.LENGTH_LONG).show()
         }
     }
 
     PhotoViewScreen(
-        imageUrl = route.imageUrl,
+        imageUrls = imageUrls,
+        initialIndex = initialIndex,
         title = route.title,
         onClose = { navController.navigateUp() },
-        onSaveImage = {
+        onSaveImage = { imageUrl ->
+            pendingSaveUrl = imageUrl
             // On Android 10+ scoped storage removes the need for a write permission.
             val needsPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
                     ContextCompat.checkSelfPermission(
@@ -103,12 +113,12 @@ private fun PhotoViewDestination(
             if (needsPermission) {
                 permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             } else {
-                saveImage()
+                saveImage(imageUrl)
             }
         },
-        onOpenInBrowser = {
+        onOpenInBrowser = { imageUrl ->
             try {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(route.imageUrl)))
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(imageUrl)))
             } catch (_: Exception) { /* no browser installed */ }
         }
     )

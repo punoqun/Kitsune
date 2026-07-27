@@ -83,7 +83,12 @@ object Routes {
     data object Categories
 
     @Serializable
-    data class PhotoView(val imageUrl: String, val title: String? = null)
+    data class PhotoView(
+        val imageUrl: String,
+        val title: String? = null,
+        val imageUrls: List<String> = emptyList(),
+        val initialIndex: Int = 0
+    )
 
     @Serializable
     data class Login(val wasLoggedOut: Boolean = false)

@@ -2,27 +2,25 @@ package io.github.drumber.kitsune.ui.component.compose.media
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.fromHtml
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import io.github.drumber.kitsune.data.common.content.KitsuHtmlToMarkdownConverter
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 
 /**
  * Renders Kitsu post/comment content as Compose-native Markdown.
  *
- * Published content uses Kitsu's server-rendered Kramdown HTML so it matches the formatting shown
- * on the website. Raw Markdown is rendered for previews and as a fallback when formatted content
- * is unavailable.
+ * Published content uses Kitsu's server-rendered Kramdown HTML ([contentFormatted]), which is
+ * converted to Markdown (see [KitsuHtmlToMarkdownConverter]) so it matches the formatting shown on
+ * the website while staying fully Compose/KMP-portable (no Android HTML APIs). Raw Markdown
+ * ([content]) is rendered for previews and as a fallback when formatted content is unavailable or
+ * converts to nothing renderable.
  *
  * @param content The original Markdown source.
  * @param contentFormatted The server-rendered HTML, when available.
@@ -33,25 +31,13 @@ fun MarkdownText(
     content: String?,
     contentFormatted: String? = null
 ) {
-    val formatted = contentFormatted?.takeIf { it.isNotBlank() }
-    if (formatted != null) {
-        val linkColor = MaterialTheme.colorScheme.primary
-        val annotatedContent = remember(formatted, linkColor) {
-            AnnotatedString.fromHtml(
-                htmlString = formatted,
-                linkStyles = TextLinkStyles(style = SpanStyle(color = linkColor))
-            ).trimTrailingWhitespace()
-        }
-        Text(
-            text = annotatedContent,
-            modifier = modifier,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        return
-    }
-
-    val source = content?.takeIf { it.isNotBlank() } ?: return
+    val source = remember(content, contentFormatted) {
+        val convertedFormatted = contentFormatted
+            ?.takeIf { it.isNotBlank() }
+            ?.let { KitsuHtmlToMarkdownConverter.convert(it) }
+            ?.takeIf { it.isNotBlank() }
+        convertedFormatted ?: content?.takeIf { it.isNotBlank() }
+    } ?: return
 
     Markdown(
         content = source,
@@ -60,14 +46,6 @@ fun MarkdownText(
         typography = markdownTypography(text = MaterialTheme.typography.bodyMedium),
         imageTransformer = Coil3ImageTransformerImpl
     )
-}
-
-private fun AnnotatedString.trimTrailingWhitespace(): AnnotatedString {
-    var end = length
-    while (end > 0 && this[end - 1].isWhitespace()) {
-        end--
-    }
-    return if (end == length) this else subSequence(0, end)
 }
 
 @Preview(showBackground = true)

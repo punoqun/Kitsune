@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
@@ -43,34 +46,35 @@ import me.saket.telephoto.zoomable.rememberZoomableState
  */
 @Composable
 fun PhotoViewScreen(
-    imageUrl: String,
+    imageUrls: List<String>,
+    initialIndex: Int,
     title: String?,
     onClose: () -> Unit,
-    onSaveImage: () -> Unit,
-    onOpenInBrowser: () -> Unit,
+    onSaveImage: (String) -> Unit,
+    onOpenInBrowser: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var controlsVisible by remember { mutableStateOf(true) }
-    val zoomableState = rememberZoomableState()
-    val imageState = rememberZoomableImageState(zoomableState)
+    val pagerState = rememberPagerState(
+        initialPage = initialIndex.coerceIn(imageUrls.indices),
+        pageCount = imageUrls::size
+    )
+    val currentImageUrl = imageUrls[pagerState.currentPage]
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        ZoomableAsyncImage(
-            model = imageUrl,
-            contentDescription = title,
-            state = imageState,
-            modifier = Modifier.fillMaxSize(),
-            onClick = { controlsVisible = !controlsVisible }
-        )
-
-        if (!imageState.isImageDisplayed) {
-            CircularProgressIndicator(
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
+        HorizontalPager(
+            state = pagerState,
+            key = { page -> page },
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            PhotoGalleryPage(
+                imageUrl = imageUrls[page],
+                title = title,
+                onClick = { controlsVisible = !controlsVisible }
             )
         }
 
@@ -104,31 +108,69 @@ fun PhotoViewScreen(
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (!title.isNullOrBlank()) {
-                    Text(
-                        text = title,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 8.dp)
-                    )
-                } else {
-                    Box(modifier = Modifier.weight(1f))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                ) {
+                    if (!title.isNullOrBlank()) {
+                        Text(
+                            text = title,
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                    if (imageUrls.size > 1) {
+                        Text(
+                            text = stringResource(
+                                R.string.feed_image_indicator,
+                                pagerState.currentPage + 1,
+                                imageUrls.size
+                            ),
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
                 IconButton(
-                    onClick = onSaveImage,
+                    onClick = { onSaveImage(currentImageUrl) },
                     colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White)
                 ) {
                     Icon(Icons.Filled.Download, stringResource(R.string.action_save))
                 }
                 IconButton(
-                    onClick = onOpenInBrowser,
+                    onClick = { onOpenInBrowser(currentImageUrl) },
                     colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White)
                 ) {
                     Icon(Icons.Filled.OpenInBrowser, stringResource(R.string.action_open_in_browser))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PhotoGalleryPage(
+    imageUrl: String,
+    title: String?,
+    onClick: () -> Unit
+) {
+    val zoomableState = rememberZoomableState()
+    val imageState = rememberZoomableImageState(zoomableState)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        ZoomableAsyncImage(
+            model = imageUrl,
+            contentDescription = title,
+            state = imageState,
+            modifier = Modifier.fillMaxSize(),
+            onClick = { onClick() }
+        )
+        if (!imageState.isImageDisplayed) {
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
     }
 }

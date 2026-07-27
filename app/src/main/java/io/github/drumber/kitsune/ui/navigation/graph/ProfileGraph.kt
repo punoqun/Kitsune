@@ -521,6 +521,15 @@ private fun ProfileFeedTab(
                 )
             )
         },
+        onImageClick = { imageUrls, index ->
+            navController.navigateSafe(
+                Routes.PhotoView(
+                    imageUrl = imageUrls[index],
+                    imageUrls = imageUrls,
+                    initialIndex = index
+                )
+            )
+        },
         onEditClick = { post ->
             navController.navigateSafe(Routes.CreatePost(editPostId = post.id))
         },
