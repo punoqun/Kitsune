@@ -1,5 +1,9 @@
 package io.github.drumber.kitsune.ui.profile
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,20 +35,32 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.user.User
@@ -224,18 +240,65 @@ private fun ProfileTopBar(
     onAvatarClick: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val hasCoverImage = user?.coverImage != null
+    val expandedContentColor = if (hasCoverImage) Color.White else MaterialTheme.colorScheme.onSurface
+    val contentColorTransition = ((collapsedFraction - 0.65f) / 0.35f).coerceIn(0f, 1f)
+    val toolbarContentColor = lerp(
+        expandedContentColor,
+        MaterialTheme.colorScheme.onSurface,
+        contentColorTransition
+    )
+    val subtitleColor = lerp(
+        expandedContentColor.copy(alpha = 0.8f),
+        MaterialTheme.colorScheme.onSurfaceVariant,
+        contentColorTransition
+    )
+    val surfaceUsesDarkStatusBarIcons = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+
+    ProfileStatusBarAppearance(
+        useDarkIcons = if (hasCoverImage && collapsedFraction < 0.9f) {
+            false
+        } else {
+            surfaceUsesDarkStatusBarIcons
+        },
+        defaultUseDarkIcons = surfaceUsesDarkStatusBarIcons
+    )
 
     Box {
         // Cover image sits behind the toolbar; fades out as the bar collapses.
         AsyncImage(
             model = user?.coverImage?.originalOrDown(),
-            contentDescription = null,
+            contentDescription = if (hasCoverImage) {
+                stringResource(R.string.profile_cover_image_description)
+            } else {
+                null
+            },
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer { alpha = 1f - collapsedFraction }
-                .clickable(onClick = onCoverClick, enabled = user?.coverImage != null)
+                .clickable(
+                    enabled = hasCoverImage,
+                    onClickLabel = stringResource(R.string.profile_cover_image_description),
+                    onClick = onCoverClick
+                )
         )
+        if (hasCoverImage) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer { alpha = 1f - collapsedFraction }
+                    .background(
+                        Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0f to Color.Black.copy(alpha = 0.6f),
+                                0.45f to Color.Black.copy(alpha = 0.3f),
+                                1f to Color.Black.copy(alpha = 0.72f)
+                            )
+                        )
+                    )
+            )
+        }
 
         LargeTopAppBar(
             title = {
@@ -250,7 +313,7 @@ private fun ProfileTopBar(
                         Text(
                             text = subtitle,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = subtitleColor,
                             modifier = Modifier.graphicsLayer {
                                 alpha = (1f - collapsedFraction * 2f).coerceIn(0f, 1f)
                             }
@@ -292,7 +355,7 @@ private fun ProfileTopBar(
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = null
+                            contentDescription = stringResource(R.string.action_more_options)
                         )
                     }
                     DropdownMenu(
@@ -316,11 +379,57 @@ private fun ProfileTopBar(
             },
             colors = TopAppBarDefaults.largeTopAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                scrolledContainerColor = MaterialTheme.colorScheme.surface
+                scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                navigationIconContentColor = toolbarContentColor,
+                titleContentColor = toolbarContentColor,
+                actionIconContentColor = toolbarContentColor
             ),
             scrollBehavior = scrollBehavior
         )
     }
+}
+
+@Composable
+private fun ProfileStatusBarAppearance(
+    useDarkIcons: Boolean,
+    defaultUseDarkIcons: Boolean
+) {
+    val view = LocalView.current
+    val activity = view.context.findActivity() ?: return
+    val controller = WindowCompat.getInsetsController(activity.window, view)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val currentUseDarkIcons by rememberUpdatedState(useDarkIcons)
+
+    SideEffect {
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            controller.isAppearanceLightStatusBars = useDarkIcons
+        }
+    }
+    DisposableEffect(lifecycleOwner, controller, defaultUseDarkIcons) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    controller.isAppearanceLightStatusBars = currentUseDarkIcons
+                }
+
+                Lifecycle.Event.ON_PAUSE -> {
+                    controller.isAppearanceLightStatusBars = defaultUseDarkIcons
+                }
+
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable
