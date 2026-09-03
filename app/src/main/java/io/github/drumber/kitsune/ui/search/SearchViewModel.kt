@@ -30,13 +30,12 @@ import com.algolia.search.model.Attribute
 import com.algolia.search.model.filter.Filter
 import com.algolia.search.model.response.ResponseSearch
 import com.algolia.search.model.search.Query
-import io.github.drumber.kitsune.constants.Kitsu
-import io.github.drumber.kitsune.constants.Repository
+import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.config.Repository
 import io.github.drumber.kitsune.data.common.exception.SearchProviderUnavailableException
 import io.github.drumber.kitsune.data.mapper.AlgoliaMapper.toMedia
 import io.github.drumber.kitsune.data.mapper.AlgoliaMapper.toUserSearchResult
 import io.github.drumber.kitsune.data.presentation.model.algolia.SearchType
-import io.github.drumber.kitsune.data.presentation.model.media.Media
 import io.github.drumber.kitsune.data.repository.AlgoliaKeyRepository
 import io.github.drumber.kitsune.data.source.network.algolia.model.search.AlgoliaMediaSearchResult
 import io.github.drumber.kitsune.data.source.network.algolia.model.search.AlgoliaUserSearchResult
@@ -191,7 +190,7 @@ class SearchViewModel(
                     _searchClientStatus.postValue(SearchClientStatus.Initialized)
                 }
             } catch (e: SearchProviderUnavailableException) {
-                logI("Search provider not available. Is the device offline?")
+                logI("Search provider not available. Is the device offline?", e)
                 _searchClientStatus.postValue(SearchClientStatus.NotAvailable)
             } catch (e: Exception) {
                 logE("Could not create search client.", e)
@@ -249,7 +248,6 @@ class SearchViewModel(
     }
 
     override fun onCleared() {
-        super.onCleared()
         searchProvider.cancel()
         connectionHandler.clear()
     }

@@ -206,11 +206,8 @@
     <string name="preference_app_theme_default">Default</string>
     <string name="preference_media_item_size">Dimensione immagine poster</string>
     <string name="preference_media_item_size_small">Piccola</string>
-    <string name="preference_start_fragment_home">Home</string>
-    <string name="preference_start_fragment_search">Cerca</string>
     <string name="preference_start_fragment">Pagina predefinita</string>
     <string name="preference_start_fragment_description">La pagina predefinita è impostata su %s.</string>
-    <string name="preference_start_fragment_library">Libreria</string>
     <string name="preference_language">Lingua</string>
     <string name="preference_country_summary_non">Nessun paese specificato.</string>
     <string name="preference_titles">Titoli</string>
@@ -233,7 +230,7 @@
     <string name="action_log_in">Accedi</string>
     <string name="action_log_in_to_kitsu">Accedi a Kitsu</string>
     <string name="action_create_account">Crea un account</string>
-    <string name="invalid_username">Indirizzo email non valido</string>
+    <string name="invalid_username">Inserisci l\'e-mail o il nome utente</string>
     <string name="login_failed">Accesso fallito</string>
     <string name="status_logging_in">Accesso in corso…</string>
     <string name="not_logged_in">Non connesso</string>
@@ -311,7 +308,6 @@
         <item quantity="many">%s anni</item>
         <item quantity="other">%s anni</item>
     </plurals>
-    <string name="preference_start_fragment_profile">Profilo</string>
     <string name="preference_app_theme_purple">Viola</string>
     <string name="preference_app_theme_green">Verde</string>
     <string name="preference_app_theme_blue">Blu</string>
@@ -336,7 +332,6 @@
     <string name="preference_not_logged_in">Devi avere effettuato l\'accesso per modificare questa impostazione.</string>
     <string name="preference_app_logs_description">Vedi e condividi i messaggi log dell\'app.</string>
     <string name="preference_open_source_libraries_description">Una lista di tutte le librerie open source utilizzate.</string>
-    <string name="prompt_email">Email</string>
     <string name="logged_in_success">Accesso effettuato come %s.</string>
     <string name="login_no_account">Non hai un account? Creane uno su <a href="https://kitsu.app">kitsu.app</a>.</string>
     <string name="library_not_started">Non iniziato</string>
@@ -414,12 +409,10 @@
     <string name="feed_tab_global">Globale</string>
     <string name="feed_tab_following">Seguiti</string>
     <string name="feed_login_required">Accedi per vedere i post delle persone che segui.</string>
-    <string name="feed_spoiler_warning">Spoiler</string>
     <string name="feed_spoiler_warning_title">Spoiler</string>
     <string name="feed_nsfw_warning_title">Contenuto NSFW</string>
     <string name="feed_content_warning_tap_to_view">Tocca per vedere</string>
     <string name="feed_unknown_user">Utente sconosciuto</string>
-    <string name="feed_post_about">su %1$s</string>
     <string name="feed_post_spoiled_episode">Ep. %1$d</string>
     <string name="feed_post_spoiled_chapter">Cap. %1$d</string>
     <string name="cd_like_post">Metti mi piace al post, %1$d mi piace</string>
@@ -458,7 +451,6 @@
     <string name="group_tab_about">Informazioni</string>
     <string name="group_tab_posts">Post</string>
     <string name="group_compose_post">Pubblica nel gruppo</string>
-    <string name="group_post_login_required">Accedi per pubblicare nei gruppi.</string>
     <string name="title_post">Post</string>
     <string name="title_comments">Commenti</string>
     <string name="hint_add_comment">Aggiungi un commento…</string>
@@ -475,13 +467,11 @@
     <string name="action_post">Pubblica</string>
     <string name="hint_post_content">A cosa stai pensando?</string>
     <string name="label_post_options">Opzioni</string>
-    <string name="label_add_tags">Aggiungi tag</string>
     <string name="label_spoiler">Spoiler</string>
     <string name="label_nsfw">NSFW</string>
     <string name="label_preview">Anteprima</string>
     <string name="label_preview_placeholder">Inizia a scrivere per vedere un\'anteprima del tuo post.</string>
     <string name="post_published">Post pubblicato.</string>
-    <string name="action_tag_media">Tagga un media</string>
     <string name="action_tag_unit">Tagga episodio/capitolo</string>
     <string name="title_tag_media">Tagga un media</string>
     <string name="title_tag_unit">Tagga episodio/capitolo</string>
@@ -517,5 +507,41 @@
     <string name="prompt_email_or_username">Email o nome utente</string>
     <string name="follow_list_following_title">Seguiti</string>
     <string name="follow_list_followers_title">Follower</string>
-    <string name="follow_list_empty">Niente da mostrare qui.</string>
+    <string name="feed_pinned_post">Fissati</string>
+    <string name="title_replies">Risposte</string>
+    <string name="preference_double_back_to_exit">Premi indietro due volte per uscire</string>
+    <plurals name="notification_actor_and_others">
+        <item quantity="one">%1$s e %2$d altro</item>
+        <item quantity="many">%1$s e %2$d altri</item>
+        <item quantity="other">%1$s e %2$d altri</item>
+    </plurals>
+    <plurals name="group_members_count">
+        <item quantity="one">%s membro</item>
+        <item quantity="many">%s membri</item>
+        <item quantity="other">%s membri</item>
+    </plurals>
+    <plurals name="comment_view_all_replies">
+        <item quantity="one">Visualizza %d risposta</item>
+        <item quantity="many">Visualizza tutte le %d risposte</item>
+        <item quantity="other">Visualizza tutte le %d risposte</item>
+    </plurals>
+    <string name="preference_double_back_to_exit_description">Richiedi di premere indietro due volte per chiudere l\'app.</string>
+    <string name="label_write">Scrivi</string>
+    <string name="label_images">Immagini</string>
+    <string name="report_post_title">Segnala post</string>
+    <string name="action_report">Segnala</string>
+    <string name="report_comment_title">Segnala commento</string>
+    <string name="report_reason">Motivazione</string>
+    <string name="report_reason_nsfw">NSFW</string>
+    <string name="report_reason_offensive">Offensivo</string>
+    <string name="report_reason_spoiler">Spoiler</string>
+    <string name="report_reason_bullying">Bullismo</string>
+    <string name="report_reason_spam">Spam</string>
+    <string name="report_reason_other">Altro</string>
+    <string name="report_explanation_hint">Spiega il motivo</string>
+    <string name="report_error_explanation_required">La spiegazione è obbligatoria</string>
+    <string name="report_submit">Invia</string>
+    <string name="report_success">Segnalazione inviata correttamente</string>
+    <string name="report_failure">Impossibile inviare la segnalazione</string>
+    <string name="report_already_reported">Hai già segnalato questo elemento.</string>
 </resources>

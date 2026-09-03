@@ -21,8 +21,8 @@ import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.constants.Kitsu
-import io.github.drumber.kitsune.constants.IntentAction.SHORTCUT_SETTINGS
+import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_SETTINGS
 import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.main.MainActivity
 import io.github.drumber.kitsune.utils.OkHttpIdlingResource

@@ -19,11 +19,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import io.github.drumber.kitsune.BuildConfig
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.constants.IntentAction.OPEN_LIBRARY
-import io.github.drumber.kitsune.constants.IntentAction.OPEN_MEDIA
-import io.github.drumber.kitsune.constants.IntentAction.SHORTCUT_LIBRARY
-import io.github.drumber.kitsune.constants.IntentAction.SHORTCUT_SEARCH
-import io.github.drumber.kitsune.constants.IntentAction.SHORTCUT_SETTINGS
+import io.github.drumber.kitsune.config.IntentAction.OPEN_LIBRARY
+import io.github.drumber.kitsune.config.IntentAction.OPEN_MEDIA
+import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_LIBRARY
+import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_SEARCH
+import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_SETTINGS
 import io.github.drumber.kitsune.domain.work.UpdateLibraryWidgetUseCase
 import io.github.drumber.kitsune.preference.KitsunePref
 import io.github.drumber.kitsune.preference.StartPagePref

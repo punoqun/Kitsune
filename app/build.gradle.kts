@@ -201,6 +201,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.gif)
+    implementation(libs.coil.svg)
 
     // Markdown rendering (post content)
     implementation(libs.mikepenz.markdown.renderer)

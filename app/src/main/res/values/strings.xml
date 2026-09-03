@@ -32,7 +32,6 @@
     <string name="feed_tab_following">Following</string>
     <string name="feed_login_required">Log in to see posts from people you follow.</string>
     <string name="feed_pinned_post">Pinned</string>
-    <string name="feed_spoiler_warning">Spoiler</string>
     <string name="feed_spoiler_warning_title">Spoiler</string>
     <string name="feed_nsfw_warning_title">NSFW content</string>
     <string name="feed_content_warning_tap_to_view">Tap to view</string>
@@ -40,7 +39,6 @@
     <string name="feed_likers_more" translatable="false">+%1$d</string>
     <string name="feed_image_indicator" translatable="false">%1$d / %2$d</string>
     <string name="feed_unknown_user">Unknown user</string>
-    <string name="feed_post_about">about %1$s</string>
     <string name="feed_post_spoiled_episode">Ep. %1$d</string>
     <string name="feed_post_spoiled_chapter">Ch. %1$d</string>
     <string name="feed_post_media_unit_separator" translatable="false">%1$s — %2$s</string>
@@ -186,7 +184,6 @@
     <string name="group_tab_about">About</string>
     <string name="group_tab_posts">Posts</string>
     <string name="group_compose_post">Post in group</string>
-    <string name="group_post_login_required">Log in to post in groups.</string>
     <string name="title_post">Post</string>
     <string name="title_comments">Comments</string>
     <string name="hint_add_comment">Add a comment…</string>
@@ -203,19 +200,21 @@
     <string name="action_post">Post</string>
     <string name="hint_post_content">What\'s on your mind?</string>
     <string name="label_post_options">Options</string>
-    <string name="label_add_tags">Add tags</string>
     <string name="label_spoiler">Spoiler</string>
     <string name="label_nsfw">NSFW</string>
+    <string name="label_write">Write</string>
     <string name="label_preview">Preview</string>
     <string name="label_preview_placeholder">Start writing to see a preview of your post.</string>
     <string name="post_published">Post published.</string>
-    <string name="action_tag_media">Tag media</string>
     <string name="action_tag_unit">Tag episode/chapter</string>
+    <string name="action_tag_media">Tag media</string>
+    <string name="label_add_tags">Add tags</string>
     <string name="title_tag_media">Tag media</string>
     <string name="title_tag_unit">Tag episode/chapter</string>
     <string name="hint_search_media">Search anime or manga…</string>
     <string name="search_provider_not_available">Search is currently unavailable.</string>
     <string name="search_provider_error">Something went wrong while searching.</string>
+    <string name="label_images">Images</string>
     <string name="action_add_image">Add image</string>
     <string name="action_remove_image">Remove image</string>
     <string name="action_follow">Follow</string>
@@ -353,10 +352,11 @@
     <string name="preference_media_item_size_large">Large</string>
     <string name="preference_start_fragment">Default Page</string>
     <string-array name="preference_start_fragment_entries" translatable="false">
-        <item>@string/preference_start_fragment_home</item>
-        <item>@string/preference_start_fragment_search</item>
-        <item>@string/preference_start_fragment_library</item>
-        <item>@string/preference_start_fragment_profile</item>
+        <item>@string/nav_home</item>
+        <item>@string/nav_search</item>
+        <item>@string/nav_feed</item>
+        <item>@string/nav_library</item>
+        <item>@string/nav_profile</item>
     </string-array>
     <string name="preference_start_fragment_home">Home</string>
     <string name="preference_start_fragment_search">Search</string>
@@ -419,7 +419,6 @@
     <string name="preference_open_source_libraries_description">A list of all used open source libraries.</string>
     <string name="preference_not_logged_in">You must be logged in to edit this setting.</string>
     <string name="app_logs_no_data">No logs available.</string>
-    <string name="prompt_email">Email</string>
     <string name="prompt_email_or_username">Email or username</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in</string>
@@ -568,8 +567,8 @@
         <item quantity="other">%1$s and %2$d others</item>
     </plurals>
     <plurals name="group_members_count">
-        <item quantity="one">%d member</item>
-        <item quantity="other">%d members</item>
+        <item quantity="one">%s member</item>
+        <item quantity="other">%s members</item>
     </plurals>
     <plurals name="comment_view_all_replies">
         <item quantity="one">View %d reply</item>
@@ -579,4 +578,25 @@
     <string name="unique_poster_transition_name" translatable="false">media_item_poster_%1$s</string>
     <string name="details_poster_transition_name" translatable="false">media_details_poster</string>
     <string name="character_picture_transition_name" translatable="false">character_picture</string>
+    <string name="create_post_transition_name" translatable="false">create_post</string>
+    <string name="unique_post_item_transition_name" translatable="false">post_item_%1$s</string>
+    <string name="post_item_transition_name" translatable="false">post_item</string>
+
+    <string name="action_report">Report</string>
+    <string name="report_post_title">Report Post</string>
+    <string name="report_comment_title">Report Comment</string>
+    <string name="report_media_reaction_title">Report Reaction</string>
+    <string name="report_reason">Reason</string>
+    <string name="report_reason_nsfw">NSFW</string>
+    <string name="report_reason_offensive">Offensive</string>
+    <string name="report_reason_spoiler">Spoiler</string>
+    <string name="report_reason_bullying">Bullying</string>
+    <string name="report_reason_spam">Spam</string>
+    <string name="report_reason_other">Other</string>
+    <string name="report_explanation_hint">Please explain</string>
+    <string name="report_error_explanation_required">Explanation is required</string>
+    <string name="report_submit">Submit</string>
+    <string name="report_success">Report successfully sent</string>
+    <string name="report_failure">Failed to submit report</string>
+    <string name="report_already_reported">You have already reported this.</string>
 </resources>

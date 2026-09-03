@@ -10,7 +10,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import io.github.drumber.kitsune.constants.AppTheme
+import io.github.drumber.kitsune.preference.AppTheme
 
 /**
  * Full Material 3 theme for Kitsune.

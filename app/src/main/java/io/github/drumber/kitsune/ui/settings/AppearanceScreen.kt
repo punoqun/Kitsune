@@ -39,8 +39,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.constants.AppTheme
-import io.github.drumber.kitsune.constants.MediaItemSize
+import io.github.drumber.kitsune.preference.AppTheme
+import io.github.drumber.kitsune.preference.MediaItemSize
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme

@@ -4,7 +4,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import io.github.drumber.kitsune.constants.AppTheme
+import io.github.drumber.kitsune.preference.AppTheme
 
 // ── DEFAULT (Kitsune Red) ─────────────────────────────────────────────────────
 

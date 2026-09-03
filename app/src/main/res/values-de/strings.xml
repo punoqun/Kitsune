@@ -54,9 +54,6 @@
     <string name="preference_dynamic_color_theme_description">An das Systemthema anpassen.</string>
     <string name="preference_app_theme_green">Grün</string>
     <string name="preference_start_fragment">Standardseite</string>
-    <string name="preference_start_fragment_search">Suchen</string>
-    <string name="preference_start_fragment_library">Bibliothek</string>
-    <string name="preference_start_fragment_profile">Profil</string>
     <string name="preference_country_summary_non">Kein Land festgelegt.</string>
     <string name="preference_titles_description">Lege fest, wie Medientitel angezeigt werden.</string>
     <string name="preference_titles_romanized">Romanisiert</string>
@@ -65,10 +62,9 @@
     <string name="preference_app_version_description">Klicken, um nach Aktualisierungen zu suchen.</string>
     <string name="action_log_in_to_kitsu">Bei Kitsu anmelden</string>
     <string name="action_create_account">Account erstellen</string>
-    <string name="invalid_username">Keine gültige E-Mail Adresse</string>
+    <string name="invalid_username">Gebe deine E-Mail oder Benutzername ein</string>
     <string name="not_logged_in">Nicht angemeldet</string>
     <string name="app_logs_no_data">Keine Protokolle verfügbar.</string>
-    <string name="prompt_email">E-Mail</string>
     <string name="library_edit_privacy_private">Privat</string>
     <string name="library_edit_finished">Abgeschlossen</string>
     <string name="library_edit_no_date_set">Kein Datum festgelegt</string>
@@ -235,7 +231,6 @@
     <string name="preference_media_item_size_small">Klein</string>
     <string name="preference_media_item_size_medium">Mittel</string>
     <string name="preference_media_item_size_large">Groß</string>
-    <string name="preference_start_fragment_home">Start</string>
     <string name="preference_language">Sprache</string>
     <string name="preference_display_name">Anzeigename</string>
     <string name="preference_profile_url">Profil-URL</string>
@@ -404,12 +399,10 @@
     <string name="feed_tab_global">Global</string>
     <string name="feed_tab_following">Folge ich</string>
     <string name="feed_login_required">Melde dich an, um Beiträge von Personen zu sehen, denen du folgst.</string>
-    <string name="feed_spoiler_warning">Spoiler</string>
     <string name="feed_spoiler_warning_title">Spoiler</string>
     <string name="feed_nsfw_warning_title">NSFW-Inhalt</string>
     <string name="feed_content_warning_tap_to_view">Zum Anzeigen tippen</string>
     <string name="feed_unknown_user">Unbekannter Benutzer</string>
-    <string name="feed_post_about">über %1$s</string>
     <string name="feed_post_spoiled_episode">Ep. %1$d</string>
     <string name="feed_post_spoiled_chapter">Kap. %1$d</string>
     <string name="cd_like_post">Beitrag liken, %1$d Likes</string>
@@ -449,7 +442,6 @@
     <string name="group_tab_about">Über</string>
     <string name="group_tab_posts">Beiträge</string>
     <string name="group_compose_post">In Gruppe posten</string>
-    <string name="group_post_login_required">Melde dich an, um in Gruppen zu posten.</string>
     <string name="title_post">Beitrag</string>
     <string name="title_comments">Kommentare</string>
     <string name="hint_add_comment">Kommentar hinzufügen…</string>
@@ -466,13 +458,11 @@
     <string name="action_post">Posten</string>
     <string name="hint_post_content">Was beschäftigt dich?</string>
     <string name="label_post_options">Optionen</string>
-    <string name="label_add_tags">Tags hinzufügen</string>
     <string name="label_spoiler">Spoiler</string>
     <string name="label_nsfw">NSFW</string>
     <string name="label_preview">Vorschau</string>
     <string name="label_preview_placeholder">Beginne zu schreiben, um eine Vorschau deines Beitrags zu sehen.</string>
     <string name="post_published">Beitrag veröffentlicht.</string>
-    <string name="action_tag_media">Medien markieren</string>
     <string name="action_tag_unit">Episode/Kapitel markieren</string>
     <string name="title_tag_media">Medien markieren</string>
     <string name="title_tag_unit">Episode/Kapitel markieren</string>
@@ -510,5 +500,39 @@
     <string name="profile_data_followers">%d Follower</string>
     <string name="follow_list_following_title">Folge ich</string>
     <string name="follow_list_followers_title">Follower</string>
-    <string name="follow_list_empty">Hier gibt es nichts zu sehen.</string>
+    <string name="feed_pinned_post">Angepinnt</string>
+    <string name="title_replies">Antworten</string>
+    <string name="preference_double_back_to_exit">Zweimal Zurück drücken zum Beenden</string>
+    <string name="preference_double_back_to_exit_description">Zum Beenden der App muss zweimal auf Zurück gedrückt werden.</string>
+    <plurals name="notification_actor_and_others">
+        <item quantity="one">%1$s und %2$d weiterer</item>
+        <item quantity="other">%1$s und %2$d weitere</item>
+    </plurals>
+    <plurals name="group_members_count">
+        <item quantity="one">%s Mitglied</item>
+        <item quantity="other">%s Mitglieder</item>
+    </plurals>
+    <plurals name="comment_view_all_replies">
+        <item quantity="one">%d Antwort ansehen</item>
+        <item quantity="other">Alle %d Antworten ansehen</item>
+    </plurals>
+    <string name="label_write">Verfassen</string>
+    <string name="label_images">Bilder</string>
+    <string name="action_report">Melden</string>
+    <string name="report_post_title">Beitrag melden</string>
+    <string name="report_comment_title">Kommentar melden</string>
+    <string name="report_reason">Grund</string>
+    <string name="report_reason_nsfw">NSFW</string>
+    <string name="report_reason_offensive">Anstößig</string>
+    <string name="report_reason_spoiler">Spoiler</string>
+    <string name="report_reason_bullying">Mobbing</string>
+    <string name="report_reason_spam">Spam</string>
+    <string name="report_reason_other">Sonstiges</string>
+    <string name="report_explanation_hint">Bitte erläutern</string>
+    <string name="report_error_explanation_required">Eine Erläuterung ist erforderlich</string>
+    <string name="report_submit">Absenden</string>
+    <string name="report_success">Meldung erfolgreich gesendet</string>
+    <string name="report_failure">Meldung konnte nicht gesendet werden</string>
+    <string name="report_already_reported">Du hast dies bereits gemeldet.</string>
+    <string name="report_media_reaction_title">Reaktion melden</string>
 </resources>

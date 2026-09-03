@@ -54,7 +54,7 @@ import com.chibatching.kotpref.livedata.asLiveData
 import com.google.android.material.color.DynamicColors
 import io.github.drumber.kitsune.BuildConfig
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.constants.Kitsu
+import io.github.drumber.kitsune.config.Kitsu
 import io.github.drumber.kitsune.data.presentation.model.character.Character
 import io.github.drumber.kitsune.data.presentation.model.feed.Post
 import io.github.drumber.kitsune.data.presentation.model.media.Anime

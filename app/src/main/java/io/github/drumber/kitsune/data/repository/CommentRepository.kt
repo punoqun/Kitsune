@@ -3,8 +3,8 @@ package io.github.drumber.kitsune.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.map
-import io.github.drumber.kitsune.constants.Kitsu
-import io.github.drumber.kitsune.constants.Repository
+import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.config.Repository
 import io.github.drumber.kitsune.data.common.Filter
 import io.github.drumber.kitsune.data.mapper.CommentMapper.toComment
 import io.github.drumber.kitsune.data.presentation.model.comment.Comment
@@ -60,6 +60,7 @@ class CommentRepository(
         val filter = Filter()
             .filter("id", commentId)
             .include("user", "uploads")
+            .fields("users", "avatar", "name", "slug", "title")
             .pageLimit(1)
         val networkComment = commentNetworkDataSource.getAllComments(filter).firstOrNull() ?: return null
         val id = networkComment.id ?: return null
@@ -129,12 +130,14 @@ class CommentRepository(
         .filter("postId", postId)
         .filter("parentId", "_none")
         .include("user", "uploads")
+        .fields("users", "avatar", "name", "slug", "title")
         .sort("createdAt")
         .pageLimit(pageSize)
 
     private fun buildRepliesFilter(parentCommentId: String, pageSize: Int) = Filter()
         .filter("parentId", parentCommentId)
         .include("user", "uploads")
+        .fields("users", "avatar", "name", "slug", "title")
         .sort("createdAt")
         .pageLimit(pageSize)
 

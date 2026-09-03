@@ -15,8 +15,8 @@ import com.algolia.instantsearch.searchbox.SearchBoxConnector
 import com.algolia.search.dsl.attributesToRetrieve
 import com.algolia.search.dsl.query
 import com.algolia.search.model.response.ResponseSearch
-import io.github.drumber.kitsune.constants.Kitsu
-import io.github.drumber.kitsune.constants.Repository
+import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.config.Repository
 import io.github.drumber.kitsune.data.common.exception.SearchProviderUnavailableException
 import io.github.drumber.kitsune.data.mapper.AlgoliaMapper.toMedia
 import io.github.drumber.kitsune.data.presentation.model.algolia.SearchType
@@ -99,7 +99,7 @@ class MediaPickerViewModel(
                     _status.postValue(Status.Initialized)
                 }
             } catch (e: SearchProviderUnavailableException) {
-                logI("Search provider not available. Is the device offline?")
+                logI("Search provider not available. Is the device offline?", e)
                 _status.postValue(Status.NotAvailable)
             } catch (e: Exception) {
                 logE("Could not create media picker search client.", e)
@@ -114,7 +114,6 @@ class MediaPickerViewModel(
     }.cachedIn(viewModelScope)
 
     override fun onCleared() {
-        super.onCleared()
         connectionHandler.clear()
         searchProvider.cancel()
     }

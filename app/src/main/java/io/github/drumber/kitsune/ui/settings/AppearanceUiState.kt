@@ -1,7 +1,7 @@
 package io.github.drumber.kitsune.ui.settings
 
-import io.github.drumber.kitsune.constants.AppTheme
-import io.github.drumber.kitsune.constants.MediaItemSize
+import io.github.drumber.kitsune.preference.AppTheme
+import io.github.drumber.kitsune.preference.MediaItemSize
 
 data class AppearanceUiState(
     val isDynamicColorAvailable: Boolean = false,

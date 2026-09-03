@@ -26,7 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.drumber.kitsune.AppLocales
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.constants.Kitsu
+import io.github.drumber.kitsune.config.Kitsu
 import io.github.drumber.kitsune.data.source.local.user.model.LocalRatingSystemPreference
 import io.github.drumber.kitsune.data.source.local.user.model.LocalSfwFilterPreference
 import io.github.drumber.kitsune.data.source.local.user.model.LocalTitleLanguagePreference

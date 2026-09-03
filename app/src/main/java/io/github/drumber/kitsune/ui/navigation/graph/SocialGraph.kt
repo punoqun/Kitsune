@@ -400,6 +400,16 @@ private fun RepliesDestination(backStackEntry: NavBackStackEntry, navController:
                 }
                 RepliesViewModel.Event.LoginRequired -> snackbarMessage = loginRequiredMsg
                 RepliesViewModel.Event.Error -> snackbarMessage = actionFailedMsg
+                is RepliesViewModel.Event.ReplyUpdated -> {
+                    if (!event.isParentComment) replies.refresh()
+                }
+                is RepliesViewModel.Event.CommentDeleted -> {
+                    if (event.isParentComment) {
+                        navController.navigateUp()
+                    } else {
+                        replies.refresh()
+                    }
+                }
             }
         }
     }
@@ -444,11 +454,15 @@ private fun ReactionDetailDestination(
     val failedMsg = stringResource(R.string.reactions_upvote_failed)
 
     LaunchedEffect(Unit) {
-        viewModel.upvoteEvents.collect { event ->
+        viewModel.events.collect { event ->
             snackbarMessage = when (event) {
-                is ReactionDetailViewModel.UpvoteEvent.Success -> null
-                ReactionDetailViewModel.UpvoteEvent.LoginRequired -> loginRequiredMsg
-                ReactionDetailViewModel.UpvoteEvent.Failed -> failedMsg
+                is ReactionDetailViewModel.Event.UpvoteSuccess -> null
+                ReactionDetailViewModel.Event.LoginRequired -> loginRequiredMsg
+                ReactionDetailViewModel.Event.UpvoteFailed -> failedMsg
+                ReactionDetailViewModel.Event.UpdateSuccess,
+                ReactionDetailViewModel.Event.UpdateFailed,
+                ReactionDetailViewModel.Event.DeleteSuccess,
+                ReactionDetailViewModel.Event.DeleteFailed -> null
             }
         }
     }

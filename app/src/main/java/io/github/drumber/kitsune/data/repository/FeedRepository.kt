@@ -3,8 +3,8 @@ package io.github.drumber.kitsune.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.map
-import io.github.drumber.kitsune.constants.Kitsu
-import io.github.drumber.kitsune.constants.Repository
+import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.config.Repository
 import io.github.drumber.kitsune.data.common.Filter
 import io.github.drumber.kitsune.data.mapper.FeedMapper.toPost
 import io.github.drumber.kitsune.data.source.network.CursorPageData
@@ -53,6 +53,17 @@ class FeedRepository(
         feedPager(pageSize) { cursor ->
             val feedId = "${if (isAnime) "Anime" else "Manga"}-$mediaId"
             feedNetworkDataSource.getMediaFeed(feedId, buildFilter(pageSize, cursor))
+        }
+
+    /**
+     * Pager for the activity feed of a single media unit (episode for anime or chapter for manga).
+     */
+    fun mediaUnitFeedPager(isEpisode: Boolean, unitId: String, pageSize: Int = Kitsu.DEFAULT_PAGE_SIZE) =
+        feedPager(pageSize) { cursor ->
+            when (isEpisode) {
+                true -> feedNetworkDataSource.getMediaEpisodeFeed(unitId, buildFilter(pageSize, cursor))
+                false -> feedNetworkDataSource.getMediaChapterFeed(unitId, buildFilter(pageSize, cursor))
+            }
         }
 
     /**
@@ -157,6 +168,7 @@ class FeedRepository(
             "subject.post.uploads",
             "actor"
         )
+        .fields("users", "avatar", "name", "slug", "title")
         .pageLimit(pageSize)
         .apply { cursor?.let { pageCursor(it) } }
 

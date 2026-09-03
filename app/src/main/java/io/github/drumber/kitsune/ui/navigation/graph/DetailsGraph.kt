@@ -27,8 +27,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.constants.Kitsu
-import io.github.drumber.kitsune.constants.SortFilter
+import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.config.SortFilter
 import io.github.drumber.kitsune.data.common.Filter
 import io.github.drumber.kitsune.data.common.media.MediaType
 import io.github.drumber.kitsune.data.presentation.model.media.Anime
@@ -412,7 +412,7 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
         val viewModel: MediaFeedViewModel = koinViewModel()
 
         LaunchedEffect(route.mediaId, route.isAnime) {
-            viewModel.setMedia(route.mediaId, route.isAnime)
+            viewModel.initMediaFeed(route.mediaId, route.isAnime)
         }
 
         val items = viewModel.dataSource.collectAsLazyPagingItems()

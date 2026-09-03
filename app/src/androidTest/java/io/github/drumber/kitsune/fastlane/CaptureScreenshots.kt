@@ -19,7 +19,7 @@ import androidx.test.internal.runner.junit4.statement.UiThreadStatement
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
 import io.github.drumber.kitsune.BuildConfig
-import io.github.drumber.kitsune.constants.Kitsu
+import io.github.drumber.kitsune.config.Kitsu
 import io.github.drumber.kitsune.preference.KitsunePref
 import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.main.MainActivity
