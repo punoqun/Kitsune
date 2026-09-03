@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
@@ -24,13 +23,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -53,6 +52,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.user.User
@@ -244,6 +244,8 @@ private fun ProfileTopBar(
         MaterialTheme.colorScheme.onSurfaceVariant,
         contentColorTransition
     )
+    val avatarSize = lerp(64.dp, 32.dp, collapsedFraction.coerceIn(0f, 1f))
+    val avatarSpacing = lerp(16.dp, 8.dp, collapsedFraction.coerceIn(0f, 1f))
     val surfaceUsesDarkStatusBarIcons = MaterialTheme.colorScheme.surface.luminance() > 0.5f
 
     StatusBarIconAppearance(
@@ -293,43 +295,47 @@ private fun ProfileTopBar(
 
         LargeTopAppBar(
             title = {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = displayName,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Avatar(
+                        imageUrl = user?.avatar?.originalOrDown(),
+                        size = avatarSize,
+                        contentDescription = user?.name,
+                        modifier = Modifier.clickable(
+                            enabled = user?.avatar != null,
+                            onClickLabel = stringResource(R.string.profile_avatar_image_description),
+                            onClick = onAvatarClick
                         )
-                        user?.title?.takeIf { it.isNotBlank() }?.let { title ->
-                            Spacer(modifier = Modifier.width(8.dp))
-                            UserTitleBadge(title = title)
-                        }
-                    }
-                    // Slug fades away as the toolbar collapses into the compact bar.
-                    if (subtitle != null) {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = subtitleColor,
-                            modifier = Modifier.graphicsLayer {
-                                alpha = (1f - collapsedFraction * 2f).coerceIn(0f, 1f)
+                    )
+                    Spacer(modifier = Modifier.width(avatarSpacing))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = displayName,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            user?.title?.takeIf { it.isNotBlank() }?.let { title ->
+                                Spacer(modifier = Modifier.width(8.dp))
+                                UserTitleBadge(title = title)
                             }
-                        )
+                        }
+                        // Slug fades away as the toolbar collapses into the compact bar.
+                        if (subtitle != null) {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = subtitleColor,
+                                modifier = Modifier.graphicsLayer {
+                                    alpha = (1f - collapsedFraction * 2f).coerceIn(0f, 1f)
+                                }
+                            )
+                        }
                     }
                 }
             },
             navigationIcon = {
-                if (isMyProfile) {
-                    // For "My Profile", the avatar acts as the navigation logo (no back button).
-                    IconButton(onClick = onAvatarClick, enabled = user?.avatar != null) {
-                        Avatar(
-                            imageUrl = user?.avatar?.originalOrDown(),
-                            size = 32.dp,
-                            contentDescription = user?.name
-                        )
-                    }
-                } else {
+                if (!isMyProfile) {
                     KitsuneBackButton(onNavigateUp = onNavigateUp)
                 }
             },
