@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -143,7 +144,12 @@ private fun SearchTopBar(
     onFilterLongClick: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
-    Surface(modifier = Modifier.fillMaxWidth(), tonalElevation = 0.dp) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding(),
+        tonalElevation = 0.dp
+    ) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
             SearchInputCard(
                 query = query,

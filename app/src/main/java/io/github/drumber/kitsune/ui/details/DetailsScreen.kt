@@ -1,5 +1,6 @@
 package io.github.drumber.kitsune.ui.details
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,7 +37,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -55,6 +60,7 @@ import io.github.drumber.kitsune.data.presentation.model.media.relationship.Medi
 import io.github.drumber.kitsune.data.presentation.model.reaction.MediaReaction
 import io.github.drumber.kitsune.data.presentation.model.user.Favorite
 import io.github.drumber.kitsune.ui.KitsuneTestTags
+import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
 import io.github.drumber.kitsune.ui.component.compose.media.ExpandableText
@@ -138,16 +144,51 @@ private fun DetailsTopBar(
     onOpenExternal: () -> Unit,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior
 ) {
+    val hasCoverImage = !media?.coverImageUrl.isNullOrBlank()
+    val surfaceUsesDarkStatusBarIcons = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    val contentColorTransition = ((collapsedFraction - 0.65f) / 0.35f).coerceIn(0f, 1f)
+    val toolbarContentColor = lerp(
+        if (hasCoverImage) Color.White else MaterialTheme.colorScheme.onSurface,
+        MaterialTheme.colorScheme.onSurface,
+        contentColorTransition
+    )
+
+    StatusBarIconAppearance(
+        useDarkIcons = if (hasCoverImage && collapsedFraction < 0.9f) {
+            false
+        } else {
+            surfaceUsesDarkStatusBarIcons
+        },
+        defaultUseDarkIcons = surfaceUsesDarkStatusBarIcons
+    )
+
     Box {
         AsyncImage(
             model = media?.coverImageUrl,
-            contentDescription = null,
+            contentDescription = media?.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
                 .graphicsLayer { alpha = 1f - collapsedFraction }
         )
+        if (hasCoverImage) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .graphicsLayer { alpha = 1f - collapsedFraction }
+                    .background(
+                        Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0f to Color.Black.copy(alpha = 0.6f),
+                                0.45f to Color.Black.copy(alpha = 0.3f),
+                                1f to Color.Black.copy(alpha = 0.72f)
+                            )
+                        )
+                    )
+            )
+        }
         KitsuneCollapsingTopAppBar(
             title = { Text(media?.title.orEmpty(), maxLines = 2, overflow = TextOverflow.Ellipsis) },
             navigationIcon = { KitsuneBackButton(onNavigateUp) },
@@ -165,16 +206,28 @@ private fun DetailsTopBar(
                         } else {
                             Icons.Default.FavoriteBorder
                         },
-                        contentDescription = null
+                        contentDescription = stringResource(
+                            if (favorite != null) {
+                                R.string.action_remove_from_favorites
+                            } else {
+                                R.string.action_add_to_favorites
+                            }
+                        )
                     )
                 }
                 IconButton(onClick = onOpenExternal) {
-                    Icon(Icons.Default.OpenInBrowser, contentDescription = null)
+                    Icon(
+                        Icons.Default.OpenInBrowser,
+                        contentDescription = stringResource(R.string.action_open_external)
+                    )
                 }
             },
             colors = TopAppBarDefaults.largeTopAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                scrolledContainerColor = MaterialTheme.colorScheme.surface
+                scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                navigationIconContentColor = toolbarContentColor,
+                titleContentColor = toolbarContentColor,
+                actionIconContentColor = toolbarContentColor
             ),
             scrollBehavior = scrollBehavior
         )
@@ -314,14 +367,18 @@ private fun MediaHeaderSection(
 
 @Composable
 private fun CategoryChipsRow(categories: List<Category>, onCategoryClick: (Category) -> Unit) {
-    Row(
+    LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(KitsuneTestTags.DetailsCategories)
             .padding(vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        categories.sortedBy { it.title }.take(8).forEach { category ->
+        items(
+            items = categories.sortedBy { it.title }.take(8),
+            key = { category -> category.id }
+        ) { category ->
             androidx.compose.material3.FilterChip(
                 selected = false,
                 onClick = { onCategoryClick(category) },

@@ -1,8 +1,5 @@
 package io.github.drumber.kitsune.ui.profile
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -35,14 +32,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,17 +47,13 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.user.User
+import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import kotlinx.coroutines.flow.Flow
@@ -255,7 +245,7 @@ private fun ProfileTopBar(
     )
     val surfaceUsesDarkStatusBarIcons = MaterialTheme.colorScheme.surface.luminance() > 0.5f
 
-    ProfileStatusBarAppearance(
+    StatusBarIconAppearance(
         useDarkIcons = if (hasCoverImage && collapsedFraction < 0.9f) {
             false
         } else {
@@ -387,49 +377,6 @@ private fun ProfileTopBar(
             scrollBehavior = scrollBehavior
         )
     }
-}
-
-@Composable
-private fun ProfileStatusBarAppearance(
-    useDarkIcons: Boolean,
-    defaultUseDarkIcons: Boolean
-) {
-    val view = LocalView.current
-    val activity = view.context.findActivity() ?: return
-    val controller = WindowCompat.getInsetsController(activity.window, view)
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val currentUseDarkIcons by rememberUpdatedState(useDarkIcons)
-
-    SideEffect {
-        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-            controller.isAppearanceLightStatusBars = useDarkIcons
-        }
-    }
-    DisposableEffect(lifecycleOwner, controller, defaultUseDarkIcons) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
-                    controller.isAppearanceLightStatusBars = currentUseDarkIcons
-                }
-
-                Lifecycle.Event.ON_PAUSE -> {
-                    controller.isAppearanceLightStatusBars = defaultUseDarkIcons
-                }
-
-                else -> Unit
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-}
-
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
 }
 
 @Composable

@@ -3,6 +3,7 @@ package io.github.drumber.kitsune.ui.profile.editprofile
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -307,14 +308,13 @@ private fun CoverAndAvatarSection(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(3f)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable(onClick = onCoverClick)
     ) {
         AsyncImage(
             model = coverImage,
             contentDescription = stringResource(R.string.profile_cover_image_description),
             contentScale = ContentScale.Crop,
-            placeholder = painterResource(R.drawable.cover_placeholder),
-            error = painterResource(R.drawable.cover_placeholder),
             modifier = Modifier.fillMaxSize()
         )
         Avatar(

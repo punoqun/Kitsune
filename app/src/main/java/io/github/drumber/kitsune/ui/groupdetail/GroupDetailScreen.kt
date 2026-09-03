@@ -46,6 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
@@ -57,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.group.Group
+import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.util.extensions.getColor
@@ -199,18 +202,49 @@ private fun GroupDetailTopBar(
             Color(context.theme.getColor(R.attr.colorPlaceholderGradientEnd))
         )
     )
+    val surfaceUsesDarkStatusBarIcons = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    val contentColorTransition = ((collapsedFraction - 0.65f) / 0.35f).coerceIn(0f, 1f)
+    val toolbarContentColor = lerp(
+        Color.White,
+        MaterialTheme.colorScheme.onSurface,
+        contentColorTransition
+    )
+
+    StatusBarIconAppearance(
+        useDarkIcons = if (collapsedFraction < 0.9f) {
+            false
+        } else {
+            surfaceUsesDarkStatusBarIcons
+        },
+        defaultUseDarkIcons = surfaceUsesDarkStatusBarIcons
+    )
 
     Box(modifier = Modifier.background(coverPlaceholder)) {
         AsyncImage(
             model = group?.coverImageUrl,
-            contentDescription = null,
+            contentDescription = group?.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer { alpha = 1f - collapsedFraction }
                 .clickable(
                     enabled = group?.coverImageUrl != null,
+                    onClickLabel = stringResource(R.string.profile_cover_image_description),
                     onClick = onOpenCover
+                )
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer { alpha = 1f - collapsedFraction }
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Black.copy(alpha = 0.55f),
+                            0.6f to Color.Transparent,
+                            1f to Color.Black.copy(alpha = 0.35f)
+                        )
+                    )
                 )
         )
         LargeTopAppBar(
@@ -223,7 +257,10 @@ private fun GroupDetailTopBar(
             navigationIcon = { KitsuneBackButton(onNavigateUp = onNavigateUp) },
             colors = TopAppBarDefaults.largeTopAppBarColors(
                 containerColor = Color.Transparent,
-                scrolledContainerColor = MaterialTheme.colorScheme.surface
+                scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                navigationIconContentColor = toolbarContentColor,
+                titleContentColor = toolbarContentColor,
+                actionIconContentColor = toolbarContentColor
             ),
             scrollBehavior = scrollBehavior
         )

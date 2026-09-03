@@ -1,3 +1,4 @@
+import com.mikepenz.aboutlibraries.plugin.AboutLibrariesTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
@@ -14,6 +15,7 @@ plugins {
 }
 
 val screenshotMode: String by project
+val generatedAboutLibrariesRes = layout.buildDirectory.dir("generated/aboutLibraries/res").get().asFile
 
 android {
     namespace = "io.github.drumber.kitsune"
@@ -120,9 +122,30 @@ ksp {
 }
 
 aboutLibraries {
+    // AboutLibraries 11 cannot register Android resource tasks through AGP 9's removed legacy API.
+    registerAndroidTasks = false
+    configPath = "app/config"
     offlineMode = true
     // Remove the "generated" timestamp to allow for reproducible builds
     excludeFields = arrayOf("generated")
+}
+
+afterEvaluate {
+    val generateAboutLibraries = tasks.named<AboutLibrariesTask>("exportLibraryDefinitions") {
+        resultDirectory = generatedAboutLibrariesRes.resolve("raw")
+    }
+    android.sourceSets.getByName("main").res.srcDir(
+        files(generatedAboutLibrariesRes).builtBy(generateAboutLibraries)
+    )
+    tasks.matching { task ->
+        task.name == "preBuild" ||
+            task.name.contains("Resources") ||
+            task.name.contains("ExtractLocales") ||
+            task.name.contains("ReplaceShortcutsPackage") ||
+            task.name.contains("SourceSetPaths")
+    }.configureEach {
+        dependsOn(generateAboutLibraries)
+    }
 }
 
 kover {
