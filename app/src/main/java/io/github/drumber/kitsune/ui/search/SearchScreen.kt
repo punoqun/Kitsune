@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -48,10 +49,17 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -187,6 +195,20 @@ private fun SearchInputCard(
     onFilterClick: () -> Unit,
     onFilterLongClick: () -> Unit
 ) {
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(isSearchFocused) {
+        if (isSearchFocused) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        } else {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        }
+    }
+
     OutlinedCard(shape = MaterialTheme.shapes.extraLarge) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             IconButton(onClick = { onSearchFocusChange(!isSearchFocused) }) {
@@ -204,7 +226,13 @@ private fun SearchInputCard(
                 onValueChange = onQueryChange,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag(KitsuneTestTags.SearchInput),
+                    .testTag(KitsuneTestTags.SearchInput)
+                    .focusRequester(focusRequester)
+                    .onFocusChanged {
+                        if (it.isFocused != isSearchFocused) {
+                            onSearchFocusChange(it.isFocused)
+                        }
+                    },
                 placeholder = { Text(stringResource(R.string.hint_search)) },
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -229,7 +257,13 @@ private fun SearchInputCard(
 @OptIn(ExperimentalFoundationApi::class)
 private fun FilterIconButton(filterCount: Int, onClick: () -> Unit, onLongClick: () -> Unit) {
     BadgedBox(
-        badge = { if (filterCount > 0) Badge { Text(filterCount.toString()) } },
+        badge = {
+            if (filterCount > 0) {
+                Badge(modifier = Modifier.offset(x = (-6).dp, y = 6.dp)) {
+                    Text(filterCount.toString())
+                }
+            }
+        },
         modifier = Modifier.padding(end = 4.dp)
     ) {
         Box(

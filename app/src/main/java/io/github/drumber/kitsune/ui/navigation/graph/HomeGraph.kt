@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.Modifier
@@ -330,6 +331,7 @@ private fun SearchDestination(
 
     val gridState = rememberLazyGridState()
     val listState = rememberLazyListState()
+    var isSearchFocused by rememberSaveable { mutableStateOf(focusSearch) }
 
     // Wire the Algolia SearchBoxConnector to our Compose-observable view whenever the client
     // is (re-)created. Also auto-scrolls to top after each new search, mirroring
@@ -349,9 +351,9 @@ private fun SearchDestination(
 
     SearchScreen(
         query = query,
-        isSearchFocused = focusSearch,
+        isSearchFocused = isSearchFocused,
         onQueryChange = { searchBoxView.notifyQueryChanged(it) },
-        onSearchFocusChange = {},
+        onSearchFocusChange = { isSearchFocused = it },
         searchType = searchType ?: io.github.drumber.kitsune.data.presentation.model.algolia.SearchType.Media,
         onSearchTypeChange = { viewModel.switchSearchType(it) },
         clientStatus = clientStatus ?: SearchViewModel.SearchClientStatus.NotInitialized,
