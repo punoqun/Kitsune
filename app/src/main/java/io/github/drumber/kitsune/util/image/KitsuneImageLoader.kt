@@ -32,7 +32,7 @@ private const val IMAGE_DISK_CACHE_SIZE_BYTES = 256L * 1024 * 1024
 /**
  * Builds the app-wide Coil [ImageLoader].
  *
- * Replaces the former `KitsuneGlideModule`: it reuses the unauthenticated `named("images")`
+ * Replaces the former `KitsuneGlideModule`: it reuses the `ImagesHttpClient`
  * OkHttp client and, in screenshot mode, blurs every image so demo screenshots don't leak
  * real cover art.
  */

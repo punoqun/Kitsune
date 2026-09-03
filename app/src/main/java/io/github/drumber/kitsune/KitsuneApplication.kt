@@ -11,6 +11,7 @@ import com.chibatching.kotpref.Kotpref
 import com.chibatching.kotpref.livedata.asLiveData
 import io.github.drumber.kitsune.data.presentation.model.appupdate.UpdateCheckResult
 import io.github.drumber.kitsune.data.repository.AppUpdateRepository
+import io.github.drumber.kitsune.di.ImagesHttpClient
 import io.github.drumber.kitsune.di.appModule
 import io.github.drumber.kitsune.domain.auth.IsUserLoggedInUseCase
 import io.github.drumber.kitsune.domain.user.UpdateLocalUserUseCase
@@ -80,7 +81,7 @@ class KitsuneApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         buildKitsuneImageLoader(
             context = context,
-            okHttpClient = get(named("images")),
+            okHttpClient = get(named<ImagesHttpClient>()),
             cacheDirectory = cacheDir
         )
 

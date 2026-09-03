@@ -20,6 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
 import io.github.drumber.kitsune.BuildConfig
 import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.di.ImagesHttpClient
 import io.github.drumber.kitsune.preference.KitsunePref
 import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.main.MainActivity
@@ -83,7 +84,7 @@ class CaptureScreenshots : KoinComponent {
         val idlingResources = mutableListOf<OkHttpIdlingResource>()
         composeTestRule.activityRule.scenario.onActivity {
             val client: OkHttpClient = get()
-            val imageClient: OkHttpClient = get(named("images"))
+            val imageClient: OkHttpClient = get(named<ImagesHttpClient>())
             idlingResources += OkHttpIdlingResource(client)
             idlingResources += OkHttpIdlingResource(imageClient)
         }

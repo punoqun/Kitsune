@@ -305,7 +305,7 @@ val dataModule = module {
     // App Update
     factory {
         createService<GitHubApi>(
-            get(named("unauthenticated")),
+            get(named<UnauthenticatedHttpClient>()),
             get(),
             GitHub.API_URL
         )
