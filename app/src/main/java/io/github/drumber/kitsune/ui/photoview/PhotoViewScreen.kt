@@ -33,9 +33,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.drumber.kitsune.R
+import io.github.drumber.kitsune.ui.component.compose.NavigationBarIconAppearance
+import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -54,6 +57,16 @@ fun PhotoViewScreen(
     onOpenInBrowser: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val defaultUseDarkIcons = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    StatusBarIconAppearance(
+        useDarkIcons = false,
+        defaultUseDarkIcons = defaultUseDarkIcons
+    )
+    NavigationBarIconAppearance(
+        useDarkIcons = false,
+        defaultUseDarkIcons = defaultUseDarkIcons
+    )
+
     var controlsVisible by remember { mutableStateOf(true) }
     val pagerState = rememberPagerState(
         initialPage = initialIndex.coerceIn(imageUrls.indices),

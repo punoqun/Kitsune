@@ -45,7 +45,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -175,20 +174,18 @@ private fun DetailsTopBar(
             onClick = onCoverClick
         )
     ) {
-        AsyncImage(
-            model = media?.coverImageUrl,
-            contentDescription = media?.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .graphicsLayer { alpha = 1f - collapsedFraction }
-        )
         if (hasCoverImage) {
+            AsyncImage(
+                model = media.coverImageUrl,
+                contentDescription = media.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer { alpha = 1f - collapsedFraction }
+            )
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
+                    .matchParentSize()
                     .graphicsLayer { alpha = 1f - collapsedFraction }
                     .background(
                         Brush.verticalGradient(
@@ -351,12 +348,9 @@ private fun MediaHeaderSection(
             .fillMaxWidth()
             .padding(bottom = 10.dp)
     ) {
-        AsyncImage(
-            model = media?.posterImageUrl,
+        MediaCover(
+            imageUrl = media?.posterImageUrl,
             contentDescription = media?.title,
-            contentScale = ContentScale.Crop,
-            placeholder = painterResource(R.drawable.ic_insert_photo_48),
-            error = painterResource(R.drawable.ic_insert_photo_48),
             modifier = Modifier
                 .size(width = 106.dp, height = 150.dp)
                 .clickable(onClick = onPosterClick)

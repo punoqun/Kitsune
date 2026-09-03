@@ -89,7 +89,9 @@ private val topLevelDestinations = listOf(
 /** Destinations that are shown without the navigation bar / rail. */
 private fun NavDestination?.hidesNavigationBar(): Boolean {
     if (this == null) return false
-    return hierarchyHasRoute(Routes.SettingsGraph::class) || hierarchyHasRoute(Routes.WebView::class)
+    return hierarchyHasRoute(Routes.SettingsGraph::class) ||
+        hierarchyHasRoute(Routes.WebView::class) ||
+        hierarchyHasRoute(Routes.PhotoView::class)
 }
 
 private fun NavDestination.hierarchyHasRoute(routeClass: KClass<*>): Boolean =
@@ -182,7 +184,11 @@ fun KitsuneApp(
                         }
                     }
                 ) { innerPadding ->
-                    val bottomPadding = innerPadding.calculateBottomPadding()
+                    val bottomPadding = if (showNavigation) {
+                        innerPadding.calculateBottomPadding()
+                    } else {
+                        0.dp
+                    }
                     AppNavHost(
                         navController = navController,
                         startDestination = startDestination,
