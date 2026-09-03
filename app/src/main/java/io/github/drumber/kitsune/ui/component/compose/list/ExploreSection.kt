@@ -25,6 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -87,7 +91,16 @@ private fun ExploreSectionHeader(
     onHeaderClick: (() -> Unit)?
 ) {
     val clickableModifier = if (onHeaderClick != null) {
-        Modifier.clickable(role = Role.Button, onClick = onHeaderClick)
+        Modifier
+            .clickable(role = Role.Button, onClick = onHeaderClick)
+            .clearAndSetSemantics {
+                contentDescription = title
+                role = Role.Button
+                onClick {
+                    onHeaderClick()
+                    true
+                }
+            }
     } else {
         Modifier
     }

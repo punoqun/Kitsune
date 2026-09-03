@@ -1,5 +1,6 @@
 package io.github.drumber.kitsune.ui.component.compose.media
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +22,11 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,10 +59,26 @@ fun MediaItemCard(
     contentDescription: String? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val cardModifier = modifier.testTag(KitsuneTestTags.MediaCard)
+    val accessibilityLabel = contentDescription?.takeIf { it.isNotBlank() }
+        ?: title?.takeIf { it.isNotBlank() }
+    val interactionModifier = when {
+        onClick != null && accessibilityLabel != null -> Modifier
+            .clickable(role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics {
+                this.contentDescription = accessibilityLabel
+                role = Role.Button
+                onClick {
+                    onClick()
+                    true
+                }
+            }
+        onClick != null -> Modifier.clickable(role = Role.Button, onClick = onClick)
+        else -> Modifier
+    }
+    val cardModifier = modifier
+        .testTag(KitsuneTestTags.MediaCard)
+        .then(interactionModifier)
     Card(
-        onClick = onClick ?: {},
-        enabled = onClick != null,
         modifier = cardModifier,
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

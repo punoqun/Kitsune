@@ -34,6 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.dp
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.ui.KitsuneTestTags
@@ -123,10 +128,19 @@ private fun SearchBarButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val searchLabel = stringResource(R.string.hint_search_media)
     Surface(
         modifier = modifier
             .testTag(KitsuneTestTags.HomeSearchBar)
-            .clickable(onClick = onClick),
+            .clickable(role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = searchLabel
+                role = Role.Button
+                onClick {
+                    onClick()
+                    true
+                }
+            },
         shape = MaterialTheme.shapes.extraLarge,
         tonalElevation = 3.dp,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -142,7 +156,7 @@ private fun SearchBarButton(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = stringResource(R.string.hint_search_media),
+                text = searchLabel,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
