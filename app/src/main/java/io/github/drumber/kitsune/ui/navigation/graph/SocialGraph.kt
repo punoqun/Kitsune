@@ -427,6 +427,15 @@ private fun RepliesDestination(backStackEntry: NavBackStackEntry, navController:
         onParentLikeClick = { parentComment?.let { viewModel.toggleCommentLike(it) } },
         onReplyLikeClick = { comment -> viewModel.toggleCommentLike(comment) },
         onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) },
+        onImageClick = { imageUrl ->
+            navController.navigateSafe(
+                Routes.PhotoView(
+                    imageUrl = imageUrl,
+                    imageUrls = listOf(imageUrl),
+                    initialIndex = 0
+                )
+            )
+        },
         onSubmitReply = { content -> viewModel.postReply(content) }
     )
 }

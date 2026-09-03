@@ -224,6 +224,7 @@ private fun PostDetailContent(
                             onViewAllRepliesClick = onViewAllRepliesClick,
                             onEditClick = onEditComment,
                             onDeleteClick = onDeleteComment,
+                            onImageClick = { imageUrl -> onImageClick(listOf(imageUrl), 0) },
                             onAuthorClick = onAuthorClick
                         )
                     }

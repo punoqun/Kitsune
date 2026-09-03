@@ -1,16 +1,21 @@
 package io.github.drumber.kitsune.ui.postdetail.compose
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -33,10 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.comment.Comment
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
@@ -55,6 +64,7 @@ fun CommentCard(
     onViewAllRepliesClick: ((Comment) -> Unit)? = null,
     onEditClick: ((Comment) -> Unit)? = null,
     onDeleteClick: ((Comment) -> Unit)? = null,
+    onImageClick: ((String) -> Unit)? = null,
     onAuthorClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -76,13 +86,7 @@ fun CommentCard(
             onDeleteClick = onDeleteClick
         )
         Spacer(Modifier.height(4.dp))
-        if (!comment.contentFormatted.isNullOrBlank() || !comment.content.isNullOrBlank()) {
-            MarkdownText(
-                content = comment.content,
-                contentFormatted = comment.contentFormatted,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        CommentContent(comment = comment, onImageClick = onImageClick)
         Spacer(Modifier.height(4.dp))
         CommentFooter(
             comment = comment,
@@ -98,6 +102,7 @@ fun CommentCard(
                 currentUserId = currentUserId,
                 onLikeClick = onLikeClick,
                 onViewAllRepliesClick = onViewAllRepliesClick,
+                onImageClick = onImageClick,
                 onAuthorClick = onAuthorClick
             )
             HorizontalDivider(modifier = Modifier.padding(top = 4.dp))
@@ -187,6 +192,53 @@ private fun CommentOverflowMenu(
 }
 
 @Composable
+fun CommentContent(
+    comment: Comment,
+    onImageClick: ((String) -> Unit)?,
+    modifier: Modifier = Modifier
+) {
+    val hasText = !comment.contentFormatted.isNullOrBlank() || !comment.content.isNullOrBlank()
+    val imageUrl = comment.imageUrl?.takeIf { it.isNotBlank() }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (hasText) {
+            MarkdownText(
+                content = comment.content,
+                contentFormatted = comment.contentFormatted,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        if (imageUrl != null) {
+            if (hasText) {
+                Spacer(Modifier.height(8.dp))
+            }
+            val imageModifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .let { base ->
+                    if (onImageClick != null) {
+                        base.clickable { onImageClick(imageUrl) }
+                    } else {
+                        base
+                    }
+                }
+            Box(modifier = imageModifier, contentAlignment = Alignment.Center) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    placeholder = painterResource(R.drawable.ic_insert_photo_48),
+                    error = painterResource(R.drawable.ic_insert_photo_48),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun CommentFooter(
     comment: Comment,
     isLiked: Boolean,
@@ -235,6 +287,7 @@ private fun CommentReplies(
     currentUserId: String?,
     onLikeClick: (Comment) -> Unit,
     onViewAllRepliesClick: ((Comment) -> Unit)?,
+    onImageClick: ((String) -> Unit)?,
     onAuthorClick: (String) -> Unit
 ) {
     comment.replies.forEach { reply ->
@@ -245,6 +298,7 @@ private fun CommentReplies(
             currentUserId = currentUserId,
             isReply = true,
             onLikeClick = onLikeClick,
+            onImageClick = onImageClick,
             onAuthorClick = onAuthorClick
         )
     }

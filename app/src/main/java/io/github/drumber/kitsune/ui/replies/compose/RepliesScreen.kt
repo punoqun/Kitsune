@@ -53,8 +53,8 @@ import io.github.drumber.kitsune.data.presentation.model.comment.Comment
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
-import io.github.drumber.kitsune.ui.component.compose.media.MarkdownText
 import io.github.drumber.kitsune.ui.postdetail.compose.CommentCard
+import io.github.drumber.kitsune.ui.postdetail.compose.CommentContent
 import io.github.drumber.kitsune.util.parseUtcDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +72,7 @@ fun RepliesScreen(
     onParentLikeClick: () -> Unit,
     onReplyLikeClick: (Comment) -> Unit,
     onAuthorClick: (String) -> Unit,
+    onImageClick: (String) -> Unit,
     onSubmitReply: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -109,6 +110,7 @@ fun RepliesScreen(
             onParentLikeClick = onParentLikeClick,
             onReplyLikeClick = onReplyLikeClick,
             onAuthorClick = onAuthorClick,
+            onImageClick = onImageClick,
             modifier = Modifier.fillMaxSize().padding(innerPadding)
         )
     }
@@ -125,6 +127,7 @@ private fun RepliesContent(
     onParentLikeClick: () -> Unit,
     onReplyLikeClick: (Comment) -> Unit,
     onAuthorClick: (String) -> Unit,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val appendState = replies.loadState.append
@@ -136,7 +139,8 @@ private fun RepliesContent(
                     isLiked = parentIsLiked,
                     likesCount = parentLikesCount,
                     onLikeClick = onParentLikeClick,
-                    onAuthorClick = onAuthorClick
+                    onAuthorClick = onAuthorClick,
+                    onImageClick = onImageClick
                 )
                 HorizontalDivider()
                 Text(
@@ -157,6 +161,7 @@ private fun RepliesContent(
                     currentUserId = currentUserId,
                     isReply = true,
                     onLikeClick = onReplyLikeClick,
+                    onImageClick = onImageClick,
                     onAuthorClick = onAuthorClick
                 )
             }
@@ -198,7 +203,8 @@ private fun ParentCommentHeader(
     isLiked: Boolean,
     likesCount: Int,
     onLikeClick: () -> Unit,
-    onAuthorClick: (String) -> Unit
+    onAuthorClick: (String) -> Unit,
+    onImageClick: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -238,13 +244,11 @@ private fun ParentCommentHeader(
                 }
             }
         }
-        if (!comment.contentFormatted.isNullOrBlank() || !comment.content.isNullOrBlank()) {
-            MarkdownText(
-                content = comment.content,
-                contentFormatted = comment.contentFormatted,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-            )
-        }
+        CommentContent(
+            comment = comment,
+            onImageClick = onImageClick,
+            modifier = Modifier.padding(top = 8.dp)
+        )
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
             IconButton(onClick = onLikeClick, modifier = Modifier.size(32.dp)) {
                 Icon(
