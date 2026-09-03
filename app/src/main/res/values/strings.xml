@@ -158,6 +158,7 @@
     <string name="reactions_upvote_login_required">Log in to upvote reactions.</string>
     <string name="reactions_upvote_failed">Failed to upvote reaction.</string>
     <string name="action_add_reaction">Add reaction</string>
+    <string name="action_upvote_reaction">Upvote reaction, %1$d upvotes</string>
     <string name="reaction_compose_title">Write a reaction</string>
     <string name="reaction_compose_edit_title">Edit reaction</string>
     <string name="reaction_compose_hint">Share your reaction…</string>

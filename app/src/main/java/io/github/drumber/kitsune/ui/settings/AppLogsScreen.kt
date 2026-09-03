@@ -2,12 +2,12 @@ package io.github.drumber.kitsune.ui.settings
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.loading.TextLoadingSkeleton
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 import kotlinx.coroutines.flow.first
 
@@ -80,7 +81,12 @@ fun AppLogsScreen(
         ) {
             when {
                 logs == null -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    TextLoadingSkeleton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        lineCount = 12
+                    )
                 }
                 logs.isBlank() -> {
                     Text(

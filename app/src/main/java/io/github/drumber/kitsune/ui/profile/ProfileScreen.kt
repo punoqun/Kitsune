@@ -4,9 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -15,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -55,6 +58,7 @@ import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.user.User
 import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
+import io.github.drumber.kitsune.ui.component.compose.loading.DetailLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -154,16 +158,13 @@ fun ProfileScreen(
         }
     ) { paddingValues ->
         when {
-            // Show loading spinner only on initial load before any user data arrives.
+            // Show skeletons only on initial load before any user data arrives.
             uiState.isInitialLoading && user == null -> {
-                Box(
+                DetailLoadingSkeleton(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                        .padding(paddingValues)
+                )
             }
 
             // "Not logged in" state is only possible on the My Profile tab.
@@ -293,11 +294,18 @@ private fun ProfileTopBar(
         LargeTopAppBar(
             title = {
                 Column {
-                    Text(
-                        text = displayName,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = displayName,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        user?.title?.takeIf { it.isNotBlank() }?.let { title ->
+                            Spacer(modifier = Modifier.width(8.dp))
+                            UserTitleBadge(title = title)
+                        }
+                    }
                     // Slug fades away as the toolbar collapses into the compact bar.
                     if (subtitle != null) {
                         Text(
@@ -333,6 +341,8 @@ private fun ProfileTopBar(
                             contentDescription = stringResource(R.string.action_edit_profile)
                         )
                     }
+                }
+                if (isMyProfile) {
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -341,7 +351,7 @@ private fun ProfileTopBar(
                     }
                 }
                 // Overflow menu (share + logout).
-                Box {
+                if (user != null) Box {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
@@ -375,6 +385,23 @@ private fun ProfileTopBar(
                 actionIconContentColor = toolbarContentColor
             ),
             scrollBehavior = scrollBehavior
+        )
+    }
+}
+
+@Composable
+private fun UserTitleBadge(title: String, modifier: Modifier = Modifier) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = MaterialTheme.shapes.small,
+        modifier = modifier
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
     }
 }

@@ -24,11 +24,11 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -63,6 +63,7 @@ import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.loading.DetailLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.ExpandableText
 import io.github.drumber.kitsune.ui.component.compose.media.MediaCover
 
@@ -88,6 +89,8 @@ fun DetailsScreen(
     onNavigateToReactions: () -> Unit,
     onNavigateToCategory: (Category) -> Unit,
     onNavigateToFranchise: (Media) -> Unit,
+    onNavigateToReaction: (MediaReaction) -> Unit,
+    onNavigateToReactionAuthor: (String) -> Unit,
     onUpvoteReaction: (MediaReaction) -> Unit,
     onAddReaction: () -> Unit,
     onCoverClick: () -> Unit,
@@ -105,6 +108,7 @@ fun DetailsScreen(
                 onShare = onShareMedia,
                 onToggleFavorite = onToggleFavorite,
                 onOpenExternal = onOpenExternal,
+                onCoverClick = onCoverClick,
                 scrollBehavior = scrollBehavior
             )
         },
@@ -124,6 +128,8 @@ fun DetailsScreen(
             onNavigateToReactions = onNavigateToReactions,
             onNavigateToCategory = onNavigateToCategory,
             onNavigateToFranchise = onNavigateToFranchise,
+            onNavigateToReaction = onNavigateToReaction,
+            onNavigateToReactionAuthor = onNavigateToReactionAuthor,
             onUpvoteReaction = onUpvoteReaction,
             onAddReaction = onAddReaction,
             onPosterClick = onPosterClick,
@@ -142,6 +148,7 @@ private fun DetailsTopBar(
     onShare: () -> Unit,
     onToggleFavorite: () -> Unit,
     onOpenExternal: () -> Unit,
+    onCoverClick: () -> Unit,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior
 ) {
     val hasCoverImage = !media?.coverImageUrl.isNullOrBlank()
@@ -162,7 +169,12 @@ private fun DetailsTopBar(
         defaultUseDarkIcons = surfaceUsesDarkStatusBarIcons
     )
 
-    Box {
+    Box(
+        modifier = Modifier.clickable(
+            enabled = hasCoverImage,
+            onClick = onCoverClick
+        )
+    ) {
         AsyncImage(
             model = media?.coverImageUrl,
             contentDescription = media?.title,
@@ -249,23 +261,28 @@ private fun DetailsContent(
     onNavigateToReactions: () -> Unit,
     onNavigateToCategory: (Category) -> Unit,
     onNavigateToFranchise: (Media) -> Unit,
+    onNavigateToReaction: (MediaReaction) -> Unit,
+    onNavigateToReactionAuthor: (String) -> Unit,
     onUpvoteReaction: (MediaReaction) -> Unit,
     onAddReaction: () -> Unit,
     onPosterClick: () -> Unit,
     onOpenStreamingLink: (String) -> Unit
 ) {
+    val contentModifier = Modifier
+        .fillMaxSize()
+        .testTag(KitsuneTestTags.DetailsContent)
+        .padding(paddingValues)
+
+    if (isLoading && media == null) {
+        DetailLoadingSkeleton(modifier = contentModifier)
+        return
+    }
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag(KitsuneTestTags.DetailsContent)
-            .padding(paddingValues)
+        modifier = contentModifier
             .verticalScroll(rememberScrollState())
             .padding(15.dp)
     ) {
-        if (isLoading) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-        }
         MediaHeaderSection(
             media = media,
             libraryEntry = libraryEntry,
@@ -297,6 +314,8 @@ private fun DetailsContent(
         if (reactions.isNotEmpty()) {
             ReactionsSection(
                 reactions = reactions,
+                onReactionClick = onNavigateToReaction,
+                onAuthorClick = onNavigateToReactionAuthor,
                 onUpvote = onUpvoteReaction,
                 onAddReaction = onAddReaction,
                 onSeeAll = onNavigateToReactions
@@ -422,6 +441,8 @@ private fun NavigationButtonsSection(
 @Composable
 private fun ReactionsSection(
     reactions: List<MediaReaction>,
+    onReactionClick: (MediaReaction) -> Unit,
+    onAuthorClick: (String) -> Unit,
     onUpvote: (MediaReaction) -> Unit,
     onAddReaction: () -> Unit,
     onSeeAll: () -> Unit
@@ -437,7 +458,10 @@ private fun ReactionsSection(
             modifier = Modifier.weight(1f)
         )
         IconButton(onClick = onAddReaction) {
-            Icon(Icons.Default.MoreVert, contentDescription = null)
+            Icon(
+                Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.action_add_reaction)
+            )
         }
         IconButton(onClick = onSeeAll) {
             Text(stringResource(R.string.action_see_all), style = MaterialTheme.typography.labelSmall)
@@ -445,17 +469,29 @@ private fun ReactionsSection(
     }
     LazyRow(modifier = Modifier.fillMaxWidth()) {
         items(reactions, key = { it.id }) { reaction ->
-            ReactionPreviewCard(reaction = reaction, onUpvote = { onUpvote(reaction) })
+            ReactionPreviewCard(
+                reaction = reaction,
+                onClick = { onReactionClick(reaction) },
+                onAuthorClick = {
+                    reaction.authorId?.let(onAuthorClick)
+                },
+                onUpvote = { onUpvote(reaction) }
+            )
         }
     }
 }
 
 @Composable
-@Suppress("UnusedParameter")
-private fun ReactionPreviewCard(reaction: MediaReaction, onUpvote: () -> Unit) {
+private fun ReactionPreviewCard(
+    reaction: MediaReaction,
+    onClick: () -> Unit,
+    onAuthorClick: () -> Unit,
+    onUpvote: () -> Unit
+) {
     Column(
         modifier = Modifier
             .width(160.dp)
+            .clickable(onClick = onClick)
             .padding(end = 8.dp)
     ) {
         val content = reaction.reaction?.takeIf { it.isNotBlank() } ?: reaction.content
@@ -468,8 +504,27 @@ private fun ReactionPreviewCard(reaction: MediaReaction, onUpvote: () -> Unit) {
         Text(
             text = reaction.authorName.orEmpty(),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.clickable(
+                enabled = reaction.authorId != null,
+                onClick = onAuthorClick
+            )
         )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onUpvote) {
+                Icon(
+                    imageVector = Icons.Default.ThumbUp,
+                    contentDescription = stringResource(
+                        R.string.action_upvote_reaction,
+                        reaction.upVotesCount
+                    )
+                )
+            }
+            Text(
+                text = reaction.upVotesCount.toString(),
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
     }
 }
 

@@ -1,5 +1,7 @@
 package io.github.drumber.kitsune.ui.library
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,7 +73,7 @@ import io.github.drumber.kitsune.data.presentation.model.library.getStringResId
 import io.github.drumber.kitsune.ui.component.compose.list.KitsunePullToRefreshBox
 import io.github.drumber.kitsune.ui.component.compose.list.PagingEmptyContent
 import io.github.drumber.kitsune.ui.component.compose.list.PagingErrorContent
-import io.github.drumber.kitsune.ui.component.compose.list.PagingLoadingContent
+import io.github.drumber.kitsune.ui.component.compose.loading.GridLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.MediaCover
 import io.github.drumber.kitsune.ui.navigation.LocalReselectEvents
 import kotlinx.coroutines.delay
@@ -315,7 +317,11 @@ private fun LibraryEntriesContent(
 
     when {
         refreshState is LoadState.Loading && libraryEntries.itemCount == 0 ->
-            PagingLoadingContent(modifier = modifier.fillMaxSize())
+            GridLoadingSkeleton(
+                modifier = modifier.fillMaxSize(),
+                columns = GridCells.Adaptive(160.dp),
+                itemAspectRatio = 1f
+            )
         refreshState is LoadState.Error && libraryEntries.itemCount == 0 ->
             PagingErrorContent(modifier = modifier.fillMaxSize(), onRetry = { libraryEntries.retry() })
         else -> {
@@ -421,6 +427,7 @@ private fun LibraryEntriesGrid(
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun LibraryEntryCard(
     entry: LibraryEntryWithModification,
     onClick: () -> Unit,
@@ -431,10 +438,13 @@ private fun LibraryEntryCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(4.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     ) {
         Row(modifier = Modifier.height(150.dp)) {
@@ -521,18 +531,15 @@ private fun LibraryEntryCardDetails(
         }
         LibraryEntryProgressRow(
             entry = entry,
-            onLongClick = onLongClick,
             onEpisodeWatched = onEpisodeWatched,
             onEpisodeUnwatched = onEpisodeUnwatched
         )
     }
 }
 
-@Suppress("UnusedParameter")
 @Composable
 private fun LibraryEntryProgressRow(
     entry: LibraryEntryWithModification,
-    onLongClick: () -> Unit,
     onEpisodeWatched: () -> Unit,
     onEpisodeUnwatched: () -> Unit
 ) {
@@ -557,14 +564,22 @@ private fun LibraryEntryProgressRow(
                 enabled = entry.hasStartedWatching,
                 modifier = Modifier.size(36.dp)
             ) {
-                Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Default.Remove,
+                    contentDescription = stringResource(R.string.action_remove),
+                    modifier = Modifier.size(20.dp)
+                )
             }
             IconButton(
                 onClick = onEpisodeWatched,
                 enabled = entry.canWatchEpisode,
                 modifier = Modifier.size(36.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(R.string.action_add),
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

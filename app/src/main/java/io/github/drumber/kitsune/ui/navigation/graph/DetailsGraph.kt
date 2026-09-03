@@ -230,10 +230,24 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
                         )
                     )
                 },
+                onNavigateToReaction = { reaction ->
+                    navController.navigateSafe(Routes.ReactionDetail(reaction.id))
+                },
+                onNavigateToReactionAuthor = { userId ->
+                    navController.navigateSafe(Routes.UserProfile(userId))
+                },
                 onUpvoteReaction = { viewModel.upvoteReaction(it) },
                 onAddReaction = { showReactionDialog = true },
-                onCoverClick = {},
-                onPosterClick = {},
+                onCoverClick = {
+                    val currentMedia = media ?: return@DetailsScreen
+                    val url = currentMedia.coverImage?.originalOrDown() ?: return@DetailsScreen
+                    navController.navigateSafe(Routes.PhotoView(url, currentMedia.title))
+                },
+                onPosterClick = {
+                    val currentMedia = media ?: return@DetailsScreen
+                    val url = currentMedia.posterImage?.originalOrDown() ?: return@DetailsScreen
+                    navController.navigateSafe(Routes.PhotoView(url, currentMedia.title))
+                },
                 onOpenStreamingLink = { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
@@ -458,6 +472,12 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
             currentUserId = viewModel.currentUserId,
             onNavigateUp = { navController.navigateUp() },
             onAddReactionClick = { showAddDialog = true },
+            onReactionClick = { reaction ->
+                navController.navigateSafe(Routes.ReactionDetail(reaction.id))
+            },
+            onAuthorClick = { userId ->
+                navController.navigateSafe(Routes.UserProfile(userId))
+            },
             onUpvoteClick = { viewModel.upvote(it) },
             onEditClick = { reaction -> editingReaction = reaction },
             onDeleteClick = { reaction -> deletingReaction = reaction }

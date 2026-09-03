@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
@@ -17,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +32,7 @@ import io.github.drumber.kitsune.data.source.local.user.model.LocalUser
 import io.github.drumber.kitsune.preference.StartPagePref
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.loading.FullScreenListLoadingSkeleton
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 import java.util.Locale
 
@@ -60,9 +59,13 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            SettingsPreferenceList(uiState = uiState, callbacks = callbacks)
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                FullScreenListLoadingSkeleton(
+                    modifier = Modifier.fillMaxSize(),
+                    showLeading = false
+                )
+            } else {
+                SettingsPreferenceList(uiState = uiState, callbacks = callbacks)
             }
         }
     }

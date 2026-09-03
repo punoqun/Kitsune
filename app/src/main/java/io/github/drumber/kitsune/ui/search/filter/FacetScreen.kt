@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -38,6 +37,7 @@ import com.algolia.search.model.search.Facet
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.loading.ListLoadingSkeleton
 import io.github.drumber.kitsune.ui.search.SearchViewModel.SearchClientStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,11 +99,11 @@ fun FacetScreen(
 
 @Composable
 private fun FacetLoadingContent(modifier: Modifier = Modifier) {
-    Column(
+    ListLoadingSkeleton(
         modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) { CircularProgressIndicator() }
+        itemCount = 7,
+        showLeading = false
+    )
 }
 
 @Composable

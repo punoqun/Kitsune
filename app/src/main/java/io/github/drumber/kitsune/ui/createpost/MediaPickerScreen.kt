@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +25,7 @@ import com.algolia.instantsearch.core.searchbox.SearchBoxView
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.media.Media
 import io.github.drumber.kitsune.ui.component.compose.list.PagingGrid
+import io.github.drumber.kitsune.ui.component.compose.loading.GridLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.MediaItemCard
 
 @Composable
@@ -90,12 +90,10 @@ fun MediaPickerScreen(
 
 @Composable
 private fun MediaPickerLoadingContent(modifier: Modifier = Modifier) {
-    androidx.compose.foundation.layout.Box(
+    GridLoadingSkeleton(
         modifier = modifier,
-        contentAlignment = androidx.compose.ui.Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
+        columns = GridCells.Fixed(3)
+    )
 }
 
 @Composable

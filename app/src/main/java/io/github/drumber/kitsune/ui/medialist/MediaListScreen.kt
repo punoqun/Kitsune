@@ -46,7 +46,7 @@ import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopA
 import io.github.drumber.kitsune.ui.component.compose.list.KitsunePullToRefreshBox
 import io.github.drumber.kitsune.ui.component.compose.list.PagingEmptyContent
 import io.github.drumber.kitsune.ui.component.compose.list.PagingErrorContent
-import io.github.drumber.kitsune.ui.component.compose.list.PagingLoadingContent
+import io.github.drumber.kitsune.ui.component.compose.loading.GridLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.MediaItemCard
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 import kotlinx.coroutines.flow.flowOf
@@ -115,7 +115,11 @@ private fun MediaListGridContent(
 
     when {
         refreshState is LoadState.Loading && items.itemCount == 0 ->
-            PagingLoadingContent(modifier = modifier)
+            GridLoadingSkeleton(
+                modifier = modifier,
+                columns = columns,
+                itemAspectRatio = itemAspectRatio
+            )
 
         refreshState is LoadState.Error && items.itemCount == 0 ->
             PagingErrorContent(modifier = modifier, onRetry = { items.retry() })
@@ -258,7 +262,7 @@ private fun MediaListWithItemsPreview() {
 @Composable
 private fun MediaListLoadingPreview() {
     KitsuneTheme {
-        PagingLoadingContent(modifier = Modifier.fillMaxSize())
+        GridLoadingSkeleton(modifier = Modifier.fillMaxSize())
     }
 }
 

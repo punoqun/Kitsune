@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Deselect
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -46,6 +45,7 @@ import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.media.category.CategoryNode
 import io.github.drumber.kitsune.preference.CategoryPrefWrapper
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.loading.ListLoadingSkeleton
 
 data class CategoryRow(
     val node: CategoryNode,
@@ -144,7 +144,10 @@ fun CategoriesScreen(
             }
 
             if (isLoading && rows.isEmpty()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                ListLoadingSkeleton(
+                    modifier = Modifier.fillMaxSize(),
+                    itemCount = 7
+                )
             }
             if (hasError && rows.isEmpty()) {
                 Column(

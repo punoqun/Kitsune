@@ -1,7 +1,5 @@
 package io.github.drumber.kitsune.navigation
 
-import android.content.Intent
-import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,8 +19,6 @@ import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.config.Kitsu
-import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_SETTINGS
 import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.main.MainActivity
 import io.github.drumber.kitsune.utils.OkHttpIdlingResource
@@ -82,19 +78,7 @@ class NavigationTest : KoinComponent {
 
     @Test
     fun shouldNavigateFromHomeToDetails() {
-        waitForTag(KitsuneTestTags.HomeSearchBar)
-        waitForTag(KitsuneTestTags.ExploreSectionHeader)
-
-        composeTestRule.onAllNodesWithTag(KitsuneTestTags.ExploreSectionHeader, useUnmergedTree = true)
-            .onFirst()
-            .performClick()
-
-        waitForTag(KitsuneTestTags.MediaCard, SEARCH_TIMEOUT_MS)
-        composeTestRule.onAllNodesWithTag(KitsuneTestTags.MediaCard, useUnmergedTree = true)
-            .onFirst()
-            .performClick()
-
-        waitForTag(KitsuneTestTags.DetailsDescription, DETAILS_TIMEOUT_MS)
+        openFirstDetails()
     }
 
     @Test
@@ -129,8 +113,7 @@ class NavigationTest : KoinComponent {
 
     @Test
     fun shouldNavigateToDetailsSubPages() {
-        openDeepLink("${Kitsu.BASE_URL}/anime/12")
-        waitForTag(KitsuneTestTags.DetailsDescription, DETAILS_TIMEOUT_MS)
+        openFirstDetails()
 
         composeTestRule.onNodeWithTag(KitsuneTestTags.DetailsEpisodesButton, useUnmergedTree = true)
             .performScrollTo()
@@ -149,10 +132,16 @@ class NavigationTest : KoinComponent {
 
     @Test
     fun shouldNavigateToSettingsAndAppearance() {
-        openSettingsShortcut()
+        waitForTag(KitsuneTestTags.HomeSearchBar)
+        clickTopLevel(R.string.nav_profile)
+        waitForAnyText(R.string.not_logged_in, R.string.profile_tab_about)
+        composeTestRule.onNode(
+            hasContentDescription(text(R.string.nav_settings)),
+            useUnmergedTree = true
+        ).performClick()
         waitForText(R.string.nav_settings)
 
-        composeTestRule.onNode(hasText(text(R.string.nav_appearance)) and hasClickAction(), useUnmergedTree = true)
+        composeTestRule.onNode(hasText(text(R.string.nav_appearance)) and hasClickAction())
             .performClick()
         waitForText(R.string.nav_appearance)
         waitForText(R.string.preference_app_theme)
@@ -162,39 +151,35 @@ class NavigationTest : KoinComponent {
     }
 
     private fun clickTopLevel(@StringRes labelRes: Int) {
-        composeTestRule.onNode(hasText(text(labelRes)) and hasClickAction(), useUnmergedTree = true)
+        composeTestRule.onNode(hasText(text(labelRes)) and hasClickAction())
             .performClick()
     }
 
-    private fun openDeepLink(url: String) {
-        composeTestRule.activityRule.scenario.onActivity { activity ->
-            activity.startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                    setPackage(activity.packageName)
-                    addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                }
-            )
-        }
-    }
-
-    private fun openSettingsShortcut() {
-        composeTestRule.activityRule.scenario.onActivity { activity ->
-            activity.startActivity(
-                Intent(activity, MainActivity::class.java).apply {
-                    action = SHORTCUT_SETTINGS
-                }
-            )
-        }
+    private fun openFirstDetails() {
+        waitForTag(KitsuneTestTags.HomeSearchBar)
+        waitForTag(KitsuneTestTags.ExploreSectionHeader)
+        composeTestRule.onAllNodesWithTag(KitsuneTestTags.ExploreSectionHeader, useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+        waitForTag(KitsuneTestTags.MediaCard, SEARCH_TIMEOUT_MS)
+        composeTestRule.onAllNodesWithTag(KitsuneTestTags.MediaCard, useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+        waitForTag(KitsuneTestTags.DetailsDescription, DETAILS_TIMEOUT_MS)
     }
 
     private fun waitForTag(tag: String, timeoutMillis: Long = DEFAULT_TIMEOUT_MS) {
         waitForNode(hasTestTag(tag), timeoutMillis)
-        composeTestRule.onNodeWithTag(tag, useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onAllNodesWithTag(tag, useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
     }
 
     private fun waitForText(@StringRes resId: Int, timeoutMillis: Long = DEFAULT_TIMEOUT_MS) {
         waitForNode(hasText(text(resId)), timeoutMillis)
-        composeTestRule.onNode(hasText(text(resId)), useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onAllNodes(hasText(text(resId)), useUnmergedTree = true)
+            .onFirst()
+            .assertIsDisplayed()
     }
 
     private fun waitForAnyText(@StringRes vararg resIds: Int, timeoutMillis: Long = DEFAULT_TIMEOUT_MS) {

@@ -29,6 +29,7 @@
         <activity
             android:name=".ui.main.MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Kitsune.SplashScreen.DayNight"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>

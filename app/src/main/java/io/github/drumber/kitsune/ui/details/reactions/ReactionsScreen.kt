@@ -1,6 +1,7 @@
 package io.github.drumber.kitsune.ui.details.reactions
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import io.github.drumber.kitsune.R
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import io.github.drumber.kitsune.data.presentation.model.reaction.MediaReaction
@@ -45,6 +48,8 @@ fun ReactionsScreen(
     currentUserId: String?,
     onNavigateUp: () -> Unit,
     onAddReactionClick: () -> Unit,
+    onReactionClick: (MediaReaction) -> Unit,
+    onAuthorClick: (String) -> Unit,
     onUpvoteClick: (MediaReaction) -> Unit,
     onEditClick: (MediaReaction) -> Unit,
     onDeleteClick: (MediaReaction) -> Unit
@@ -60,7 +65,10 @@ fun ReactionsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddReactionClick) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.action_add_reaction)
+                )
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
@@ -83,6 +91,8 @@ fun ReactionsScreen(
                     ReactionItem(
                         reaction = item,
                         isOwn = item.authorId != null && item.authorId == currentUserId,
+                        onClick = { onReactionClick(item) },
+                        onAuthorClick = { item.authorId?.let(onAuthorClick) },
                         onUpvoteClick = { onUpvoteClick(item) },
                         onEditClick = { onEditClick(item) },
                         onDeleteClick = { onDeleteClick(item) }
@@ -97,6 +107,8 @@ fun ReactionsScreen(
 private fun ReactionItem(
     reaction: MediaReaction,
     isOwn: Boolean,
+    onClick: () -> Unit,
+    onAuthorClick: () -> Unit,
     onUpvoteClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -104,9 +116,16 @@ private fun ReactionItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable(
+                enabled = reaction.authorId != null,
+                onClick = onAuthorClick
+            )
+        ) {
             Avatar(
                 imageUrl = reaction.authorAvatarUrl,
                 size = 36.dp,
@@ -131,7 +150,13 @@ private fun ReactionItem(
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onUpvoteClick) {
-                Icon(imageVector = Icons.Default.ThumbUp, contentDescription = null)
+                Icon(
+                    imageVector = Icons.Default.ThumbUp,
+                    contentDescription = stringResource(
+                        R.string.action_upvote_reaction,
+                        reaction.upVotesCount
+                    )
+                )
             }
             Text(
                 text = reaction.upVotesCount.toString(),
@@ -140,10 +165,16 @@ private fun ReactionItem(
             if (isOwn) {
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onEditClick) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.action_edit)
+                    )
                 }
                 IconButton(onClick = onDeleteClick) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.action_delete)
+                    )
                 }
             }
         }

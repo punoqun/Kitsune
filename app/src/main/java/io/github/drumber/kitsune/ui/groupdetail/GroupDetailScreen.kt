@@ -15,9 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -27,6 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -61,6 +60,7 @@ import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.group.Group
 import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
+import io.github.drumber.kitsune.ui.component.compose.loading.DetailLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.util.extensions.getColor
 import kotlinx.coroutines.flow.Flow
@@ -142,14 +142,11 @@ fun GroupDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         if (isLoading && group == null) {
-            Box(
+            DetailLoadingSkeleton(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+                    .padding(innerPadding)
+            )
         } else {
             GroupDetailContent(
                 group = group,
@@ -335,7 +332,16 @@ private fun GroupDetailInfo(
         Spacer(Modifier.height(4.dp))
         val categoryName = group?.categoryName?.takeUnless { it.isBlank() }
         if (categoryName != null) {
-            AssistChip(onClick = {}, label = { Text(categoryName) })
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Text(
+                    text = categoryName,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
         if (membershipState.isVisible) {
             Spacer(Modifier.height(8.dp))

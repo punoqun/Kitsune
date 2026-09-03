@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,7 +16,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
@@ -45,6 +45,7 @@ import io.github.drumber.kitsune.data.presentation.model.user.stats.UserStatsDat
 import io.github.drumber.kitsune.data.presentation.model.user.stats.UserStatsKind
 import io.github.drumber.kitsune.ui.component.compose.chart.DonutChart
 import io.github.drumber.kitsune.ui.component.compose.chart.DonutSlice
+import io.github.drumber.kitsune.ui.component.compose.loading.SkeletonBox
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 import io.github.drumber.kitsune.util.TimeUtil
 import kotlinx.coroutines.launch
@@ -142,7 +143,7 @@ private fun ProfileStatsPage(
             contentAlignment = Alignment.Center
         ) {
             when {
-                isLoading -> CircularProgressIndicator()
+                isLoading -> SkeletonBox(modifier = Modifier.fillMaxSize().padding(16.dp))
 
                 slices.isEmpty() -> Text(
                     text = stringResource(R.string.no_data_available),

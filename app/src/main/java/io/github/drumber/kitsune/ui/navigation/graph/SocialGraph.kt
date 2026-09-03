@@ -475,6 +475,9 @@ private fun ReactionDetailDestination(
         onSnackbarShown = { snackbarMessage = null },
         onNavigateUp = { navController.navigateUp() },
         onUpvote = { viewModel.upvote() },
+        onAuthorClick = { userId ->
+            navController.navigateSafe(Routes.UserProfile(userId))
+        },
         onMediaClick = {
             val r = viewModel.reaction.value
             val slug = r?.mediaSlug

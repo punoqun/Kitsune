@@ -1,5 +1,6 @@
 package io.github.drumber.kitsune.ui.details.episodes
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -77,7 +78,6 @@ fun EpisodesScreen(
     }
 }
 
-@Suppress("UnusedParameter")
 @Composable
 private fun EpisodeItem(
     item: MediaUnit,
@@ -92,6 +92,7 @@ private fun EpisodeItem(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(KitsuneTestTags.EpisodeItem)
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

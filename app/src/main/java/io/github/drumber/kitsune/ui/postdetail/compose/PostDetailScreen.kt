@@ -46,7 +46,8 @@ import io.github.drumber.kitsune.data.presentation.model.comment.Comment
 import io.github.drumber.kitsune.data.presentation.model.feed.Post
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
-import io.github.drumber.kitsune.ui.component.compose.list.PagingLoadingContent
+import io.github.drumber.kitsune.ui.component.compose.loading.DetailLoadingSkeleton
+import io.github.drumber.kitsune.ui.component.compose.loading.ListLoadingSkeleton
 import io.github.drumber.kitsune.ui.feed.compose.PostCard
 import io.github.drumber.kitsune.ui.postdetail.PostDetailViewModel
 
@@ -193,11 +194,21 @@ private fun PostDetailContent(
                 HorizontalDivider()
             }
         } else {
-            item { PagingLoadingContent(modifier = Modifier.fillMaxWidth()) }
+            item {
+                DetailLoadingSkeleton(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
+                )
+            }
         }
         when {
             refreshState is LoadState.Loading && comments.itemCount == 0 ->
-                item { PagingLoadingContent(modifier = Modifier.fillMaxWidth()) }
+                item {
+                    ListLoadingSkeleton(
+                        modifier = Modifier.fillMaxWidth(),
+                        itemCount = 3
+                    )
+                }
             else -> {
                 items(count = comments.itemCount, key = comments.itemKey { it.id }) { index ->
                     comments[index]?.let { comment ->

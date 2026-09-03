@@ -1,18 +1,15 @@
 package io.github.drumber.kitsune.ui.details
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -20,6 +17,7 @@ import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.mapping.Mapping
 import io.github.drumber.kitsune.data.presentation.model.mapping.getExternalUrl
 import io.github.drumber.kitsune.data.presentation.model.mapping.getSiteName
+import io.github.drumber.kitsune.ui.component.compose.loading.ListLoadingSkeleton
 
 @Composable
 fun MediaMappingsScreen(
@@ -38,14 +36,12 @@ fun MediaMappingsScreen(
         )
         when (state) {
             is MediaMappingsSate.Loading -> {
-                Box(
+                ListLoadingSkeleton(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                        .fillMaxWidth(),
+                    itemCount = 4,
+                    showLeading = false
+                )
             }
             is MediaMappingsSate.Error -> {
                 Text(

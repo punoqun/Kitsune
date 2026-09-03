@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +41,7 @@ import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.reaction.MediaReaction
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.loading.DetailLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.ui.component.compose.media.MediaCover
 import io.github.drumber.kitsune.util.parseUtcDate
@@ -56,6 +56,7 @@ fun ReactionDetailScreen(
     onSnackbarShown: () -> Unit,
     onNavigateUp: () -> Unit,
     onUpvote: () -> Unit,
+    onAuthorClick: (String) -> Unit,
     onMediaClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -82,17 +83,15 @@ fun ReactionDetailScreen(
     ) { innerPadding ->
         when {
             isLoading && reaction == null ->
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                DetailLoadingSkeleton(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding)
+                )
             reaction != null ->
                 ReactionDetailContent(
                     reaction = reaction,
                     isUpvoted = isUpvoted,
                     onUpvote = onUpvote,
+                    onAuthorClick = onAuthorClick,
                     onMediaClick = onMediaClick,
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
@@ -106,6 +105,7 @@ private fun ReactionDetailContent(
     reaction: MediaReaction,
     isUpvoted: Boolean,
     onUpvote: () -> Unit,
+    onAuthorClick: (String) -> Unit,
     onMediaClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -114,7 +114,10 @@ private fun ReactionDetailContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        ReactionAuthorRow(reaction = reaction)
+        ReactionAuthorRow(
+            reaction = reaction,
+            onClick = { reaction.authorId?.let(onAuthorClick) }
+        )
         Spacer(Modifier.height(16.dp))
         if (!reaction.reaction.isNullOrBlank() || !reaction.content.isNullOrBlank()) {
             Text(
@@ -133,7 +136,10 @@ private fun ReactionDetailContent(
         ) {
             Icon(
                 imageVector = if (isUpvoted) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
-                contentDescription = null,
+                contentDescription = stringResource(
+                    R.string.action_upvote_reaction,
+                    reaction.upVotesCount
+                ),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(Modifier.width(6.dp))
@@ -143,9 +149,19 @@ private fun ReactionDetailContent(
 }
 
 @Composable
-private fun ReactionAuthorRow(reaction: MediaReaction) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Avatar(imageUrl = reaction.authorAvatarUrl, size = 48.dp)
+private fun ReactionAuthorRow(reaction: MediaReaction, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable(
+            enabled = reaction.authorId != null,
+            onClick = onClick
+        )
+    ) {
+        Avatar(
+            imageUrl = reaction.authorAvatarUrl,
+            size = 48.dp,
+            contentDescription = reaction.authorName
+        )
         Spacer(Modifier.width(12.dp))
         Column {
             Text(

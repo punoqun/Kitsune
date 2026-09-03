@@ -37,6 +37,7 @@ import io.github.drumber.kitsune.ui.permissions.requestNotificationPermission
 import io.github.drumber.kitsune.ui.permissions.showNotificationPermissionRejectedDialog
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -113,6 +114,7 @@ class MainActivity : BaseActivity() {
 
                 LaunchedEffect(initialRoute) {
                     if (initialRoute != null) {
+                        controller.currentBackStackEntryFlow.first()
                         controller.navigateToTopLevel(initialRoute)
                     }
                 }
@@ -120,6 +122,7 @@ class MainActivity : BaseActivity() {
                 val intentToHandle = pendingIntent
                 LaunchedEffect(intentToHandle) {
                     if (intentToHandle != null) {
+                        controller.currentBackStackEntryFlow.first()
                         handleIntentAction(intentToHandle, controller)
                         pendingIntent = null
                     }
@@ -206,6 +209,21 @@ class MainActivity : BaseActivity() {
 
             OPEN_LIBRARY -> {
                 controller.navigateToTopLevel(Routes.Library)
+                true
+            }
+
+            SHORTCUT_LIBRARY -> {
+                controller.navigateToTopLevel(Routes.Library)
+                true
+            }
+
+            SHORTCUT_SEARCH -> {
+                controller.navigateToTopLevel(Routes.Search(focusSearch = true))
+                true
+            }
+
+            SHORTCUT_SETTINGS -> {
+                controller.navigateToTopLevel(Routes.SettingsGraph)
                 true
             }
 

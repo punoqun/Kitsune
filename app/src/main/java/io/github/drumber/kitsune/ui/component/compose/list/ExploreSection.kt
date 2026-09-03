@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,13 +30,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.drumber.kitsune.ui.KitsuneTestTags
+import io.github.drumber.kitsune.ui.component.compose.loading.HorizontalLoadingSkeleton
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 
 /**
  * A horizontal carousel section with a clickable header title and a [LazyRow] of items.
  * Replaces the XML-based [io.github.drumber.kitsune.ui.component.ExploreSection].
  *
- * - [items] = null → shows a loading spinner in place of the row
+ * - [items] = null → shows skeleton cards in place of the row
  * - [items] = empty list → shows nothing (callers decide whether to hide the section)
  * - [onHeaderClick] = null → the header arrow is hidden and the row is not clickable
  *
@@ -119,14 +119,12 @@ private fun ExploreSectionHeader(
 
 @Composable
 private fun ExploreSectionLoading(minHeight: Dp) {
-    Box(
+    HorizontalLoadingSkeleton(
         modifier = Modifier
             .fillMaxWidth()
             .height(minHeight.coerceAtLeast(80.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(modifier = Modifier.size(32.dp))
-    }
+        itemHeight = minHeight.coerceAtLeast(80.dp)
+    )
 }
 
 // region Previews

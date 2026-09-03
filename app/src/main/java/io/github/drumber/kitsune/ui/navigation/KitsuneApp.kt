@@ -7,7 +7,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -180,12 +182,14 @@ fun KitsuneApp(
                         }
                     }
                 ) { innerPadding ->
+                    val bottomPadding = innerPadding.calculateBottomPadding()
                     AppNavHost(
                         navController = navController,
                         startDestination = startDestination,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(bottom = innerPadding.calculateBottomPadding())
+                            .padding(bottom = bottomPadding)
+                            .consumeWindowInsets(PaddingValues(bottom = bottomPadding))
                     )
                 }
             }

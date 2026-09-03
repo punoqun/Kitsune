@@ -16,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +34,7 @@ import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.character.Character
 import io.github.drumber.kitsune.data.presentation.model.character.MediaCharacter
 import io.github.drumber.kitsune.data.presentation.model.media.Media
+import io.github.drumber.kitsune.ui.component.compose.loading.HorizontalLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.ExpandableText
 import io.github.drumber.kitsune.ui.component.compose.media.MediaCover
 
@@ -168,7 +168,7 @@ private fun CharacterAppearancesSection(
         modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp)
     )
     when {
-        isLoading -> CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+        isLoading -> HorizontalLoadingSkeleton(modifier = Modifier.fillMaxWidth())
         !hasData -> {
             Text(
                 text = stringResource(R.string.no_data_available),

@@ -23,7 +23,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -103,97 +102,78 @@ private fun ProfileAboutContent(
     onProfileLinkClick: (ProfileLink) -> Unit
 ) {
     LazyColumn(state = lazyListState, contentPadding = PaddingValues(bottom = 16.dp)) {
-        if (!user.title.isNullOrBlank()) {
-                item(key = "title_badge") { UserTitleBadge(title = user.title!!) }
-            }
-            item(key = "follow_counts") {
-                FollowCountsRow(
-                    followingCount = user.followingCount ?: 0,
-                    followersCount = user.followersCount ?: 0,
-                    onFollowingClick = onFollowingClick,
-                    onFollowersClick = onFollowersClick
+        item(key = "follow_counts") {
+            FollowCountsRow(
+                followingCount = user.followingCount ?: 0,
+                followersCount = user.followersCount ?: 0,
+                onFollowingClick = onFollowingClick,
+                onFollowersClick = onFollowersClick
+            )
+        }
+        if (followState?.canFollow == true) {
+            item(key = "follow_button") {
+                FollowButton(
+                    isFollowing = followState.isFollowing,
+                    isProcessing = followState.isFollowProcessing,
+                    onClick = onFollowClick
                 )
-            }
-            if (followState?.canFollow == true) {
-                item(key = "follow_button") {
-                    FollowButton(
-                        isFollowing = followState.isFollowing,
-                        isProcessing = followState.isFollowProcessing,
-                        onClick = onFollowClick
-                    )
-                }
-            }
-            item(key = "about_card") {
-                AboutMeCard(
-                    user = user,
-                    onWaifuClick = onWaifuClick,
-                    modifier = Modifier.padding(10.dp)
-                )
-            }
-            val profileLinks = user.profileLinks.orEmpty()
-            if (profileLinks.isNotEmpty()) {
-                item(key = "profile_links") {
-                    ProfileLinksChips(
-                        profileLinks = profileLinks,
-                        onProfileLinkClick = onProfileLinkClick,
-                        modifier = Modifier.padding(horizontal = 10.dp)
-                    )
-                }
-            }
-            item(key = "stats_card") {
-                StatsCard(
-                    stats = user.stats,
-                    isLoading = isInitialLoading,
-                    modifier = Modifier.padding(10.dp)
-                )
-            }
-            val favorites = user.favorites.orEmpty()
-            val favAnime = favorites.filter { it.item is Anime }.map { it.item as Anime }
-            val favManga = favorites.filter { it.item is Manga }.map { it.item as Manga }
-            val favChars = favorites.filter { it.item is Character }.map { it.item as Character }
-            if (favAnime.isNotEmpty()) {
-                item(key = "fav_anime") {
-                    FavoriteMediaRow(
-                        title = stringResource(R.string.title_favorite_anime),
-                        items = favAnime,
-                        onItemClick = onMediaClick
-                    )
-                }
-            }
-            if (favManga.isNotEmpty()) {
-                item(key = "fav_manga") {
-                    FavoriteMediaRow(
-                        title = stringResource(R.string.title_favorite_manga),
-                        items = favManga,
-                        onItemClick = onMediaClick
-                    )
-                }
-            }
-            if (favChars.isNotEmpty()) {
-                item(key = "fav_characters") {
-                    FavoriteCharactersRow(
-                        title = stringResource(R.string.title_favorite_characters),
-                        characters = favChars,
-                        onCharacterClick = onCharacterClick
-                    )
-                }
             }
         }
-    }
-
-@Composable
-private fun UserTitleBadge(title: String, modifier: Modifier = Modifier) {
-    Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shape = MaterialTheme.shapes.small,
-        modifier = modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-        )
+        item(key = "about_card") {
+            AboutMeCard(
+                user = user,
+                onWaifuClick = onWaifuClick,
+                modifier = Modifier.padding(10.dp)
+            )
+        }
+        val profileLinks = user.profileLinks.orEmpty()
+        if (profileLinks.isNotEmpty()) {
+            item(key = "profile_links") {
+                ProfileLinksChips(
+                    profileLinks = profileLinks,
+                    onProfileLinkClick = onProfileLinkClick,
+                    modifier = Modifier.padding(horizontal = 10.dp)
+                )
+            }
+        }
+        item(key = "stats_card") {
+            StatsCard(
+                stats = user.stats,
+                isLoading = isInitialLoading,
+                modifier = Modifier.padding(10.dp)
+            )
+        }
+        val favorites = user.favorites.orEmpty()
+        val favAnime = favorites.filter { it.item is Anime }.map { it.item as Anime }
+        val favManga = favorites.filter { it.item is Manga }.map { it.item as Manga }
+        val favChars = favorites.filter { it.item is Character }.map { it.item as Character }
+        if (favAnime.isNotEmpty()) {
+            item(key = "fav_anime") {
+                FavoriteMediaRow(
+                    title = stringResource(R.string.title_favorite_anime),
+                    items = favAnime,
+                    onItemClick = onMediaClick
+                )
+            }
+        }
+        if (favManga.isNotEmpty()) {
+            item(key = "fav_manga") {
+                FavoriteMediaRow(
+                    title = stringResource(R.string.title_favorite_manga),
+                    items = favManga,
+                    onItemClick = onMediaClick
+                )
+            }
+        }
+        if (favChars.isNotEmpty()) {
+            item(key = "fav_characters") {
+                FavoriteCharactersRow(
+                    title = stringResource(R.string.title_favorite_characters),
+                    characters = favChars,
+                    onCharacterClick = onCharacterClick
+                )
+            }
+        }
     }
 }
 

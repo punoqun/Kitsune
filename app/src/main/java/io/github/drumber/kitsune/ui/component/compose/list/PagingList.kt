@@ -42,6 +42,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import io.github.drumber.kitsune.R
+import io.github.drumber.kitsune.ui.component.compose.loading.GridLoadingSkeleton
+import io.github.drumber.kitsune.ui.component.compose.loading.ListLoadingSkeleton
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 
 /**
@@ -71,7 +73,10 @@ fun <T : Any> PagingColumn(
 
     when {
         refreshState is LoadState.Loading && items.itemCount == 0 ->
-            PagingLoadingContent(modifier = modifier.fillMaxSize())
+            ListLoadingSkeleton(
+                modifier = modifier.fillMaxSize(),
+                contentPadding = contentPadding
+            )
 
         refreshState is LoadState.Error && items.itemCount == 0 ->
             PagingErrorContent(modifier = modifier.fillMaxSize(), onRetry = { items.retry() })
@@ -129,7 +134,13 @@ fun <T : Any> PagingGrid(
 
     when {
         refreshState is LoadState.Loading && items.itemCount == 0 ->
-            PagingLoadingContent(modifier = modifier.fillMaxSize())
+            GridLoadingSkeleton(
+                modifier = modifier.fillMaxSize(),
+                columns = columns,
+                contentPadding = contentPadding,
+                verticalArrangement = verticalArrangement,
+                horizontalArrangement = horizontalArrangement
+            )
 
         refreshState is LoadState.Error && items.itemCount == 0 ->
             PagingErrorContent(modifier = modifier.fillMaxSize(), onRetry = { items.retry() })
@@ -168,12 +179,10 @@ fun <T : Any> PagingGrid(
     }
 }
 
-/** Full-screen loading spinner shown during the initial page fetch. */
+/** List-shaped skeleton shown during an initial page fetch. */
 @Composable
 fun PagingLoadingContent(modifier: Modifier = Modifier) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
+    ListLoadingSkeleton(modifier = modifier)
 }
 
 /** Full-screen empty state shown when paging has completed with zero items. */

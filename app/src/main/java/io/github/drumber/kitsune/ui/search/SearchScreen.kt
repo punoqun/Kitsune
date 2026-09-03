@@ -1,5 +1,7 @@
 package io.github.drumber.kitsune.ui.search
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -64,7 +67,8 @@ import io.github.drumber.kitsune.data.presentation.model.user.UserSearchResult
 import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.component.compose.list.PagingEmptyContent
 import io.github.drumber.kitsune.ui.component.compose.list.PagingErrorContent
-import io.github.drumber.kitsune.ui.component.compose.list.PagingLoadingContent
+import io.github.drumber.kitsune.ui.component.compose.loading.GridLoadingSkeleton
+import io.github.drumber.kitsune.ui.component.compose.loading.ListLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.ui.component.compose.media.MediaItemCard
 import io.github.drumber.kitsune.ui.search.SearchViewModel.SearchClientStatus
@@ -111,9 +115,10 @@ fun SearchScreen(
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             if (clientStatus != SearchClientStatus.Initialized) {
                 SearchClientStatusContent(
+                    searchType = searchType,
                     clientStatus = clientStatus,
                     onRetry = onRetrySearchClient,
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.fillMaxSize()
                 )
             } else {
                 SearchResultsContent(
@@ -221,13 +226,21 @@ private fun SearchInputCard(
 }
 
 @Composable
-@Suppress("UnusedParameter")
+@OptIn(ExperimentalFoundationApi::class)
 private fun FilterIconButton(filterCount: Int, onClick: () -> Unit, onLongClick: () -> Unit) {
     BadgedBox(
         badge = { if (filterCount > 0) Badge { Text(filterCount.toString()) } },
         modifier = Modifier.padding(end = 4.dp)
     ) {
-        IconButton(onClick = onClick) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(48.dp)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
+        ) {
             Icon(
                 imageVector = Icons.Filled.FilterList,
                 contentDescription = stringResource(R.string.title_filter)
@@ -270,7 +283,11 @@ private fun SearchResultsContent(
     val append = items.loadState.append
     when {
         refresh is LoadState.Loading && items.itemCount == 0 ->
-            PagingLoadingContent(modifier = Modifier.fillMaxSize())
+            if (searchType == SearchType.Users) {
+                ListLoadingSkeleton(modifier = Modifier.fillMaxSize())
+            } else {
+                GridLoadingSkeleton(modifier = Modifier.fillMaxSize())
+            }
         refresh is LoadState.Error && items.itemCount == 0 ->
             PagingErrorContent(modifier = Modifier.fillMaxSize(), onRetry = { items.retry() })
         refresh is LoadState.NotLoading &&
@@ -399,26 +416,38 @@ private fun UserResultRow(user: UserSearchResult, onClick: () -> Unit, modifier:
 
 @Composable
 private fun SearchClientStatusContent(
+    searchType: SearchType,
     clientStatus: SearchClientStatus,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        when (clientStatus) {
-            SearchClientStatus.NotInitialized -> CircularProgressIndicator()
-            SearchClientStatus.NotAvailable -> SearchClientErrorContent(
-                message = stringResource(R.string.search_provider_not_available),
-                onRetry = onRetry
-            )
-            SearchClientStatus.Error -> SearchClientErrorContent(
-                message = stringResource(R.string.search_provider_error),
-                onRetry = onRetry
-            )
-            SearchClientStatus.Initialized -> Unit
+    when (clientStatus) {
+        SearchClientStatus.NotInitialized -> {
+            if (searchType == SearchType.Users) {
+                ListLoadingSkeleton(modifier = modifier)
+            } else {
+                GridLoadingSkeleton(modifier = modifier)
+            }
         }
+        SearchClientStatus.NotAvailable, SearchClientStatus.Error -> {
+            Column(
+                modifier = modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                SearchClientErrorContent(
+                    message = stringResource(
+                        if (clientStatus == SearchClientStatus.NotAvailable) {
+                            R.string.search_provider_not_available
+                        } else {
+                            R.string.search_provider_error
+                        }
+                    ),
+                    onRetry = onRetry
+                )
+            }
+        }
+        SearchClientStatus.Initialized -> Unit
     }
 }
 
