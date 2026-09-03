@@ -76,10 +76,10 @@ fun CommentCard(
             onDeleteClick = onDeleteClick
         )
         Spacer(Modifier.height(4.dp))
-        if (!comment.content.isNullOrBlank()) {
+        if (!comment.contentFormatted.isNullOrBlank() || !comment.content.isNullOrBlank()) {
             MarkdownText(
-                content = comment.contentFormatted ?: comment.content,
-                isHtml = comment.contentFormatted != null,
+                content = comment.content,
+                contentFormatted = comment.contentFormatted,
                 modifier = Modifier.fillMaxWidth()
             )
         }

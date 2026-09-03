@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.android.legacy.kapt)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.androidx.navigation.safeargs)
     alias(libs.plugins.aboutlibraries.plugin)
     alias(libs.plugins.jetbrains.kotlin.parcelize)
     alias(libs.plugins.jetbrains.kotlin.serialization)
@@ -68,8 +67,6 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
-        dataBinding = true
         buildConfig = true
         compose = true
     }
@@ -132,15 +129,9 @@ kover {
     reports {
         filters {
             excludes {
-                // Generated code (data binding, navigation safe-args, Glide, Room, KSP, etc.)
+                // Generated code (Room, KSP, etc.)
                 classes(
-                    "*.databinding.*",
-                    "*.BR",
                     "*.BuildConfig",
-                    "*Binding",
-                    "*Args",
-                    "*Directions",
-                    "*GlideModule*",
                     "*_Factory",
                     "*_Impl",
                     "hilt_aggregated_deps.*"
@@ -171,18 +162,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.insert.koin.androidx.compose)
-    implementation(libs.accompanist.themeadapter.material3)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
-
-    // SwipeRefresh layout
-    implementation(libs.androidx.swiperefreshlayout)
-
-    // Navigation
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
-    implementation(libs.androidx.fragment.ktx)
 
     // Preference
     implementation(libs.androidx.preference.ktx)
@@ -215,24 +197,21 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.paging)
 
-    // ViewPager
-    implementation(libs.androidx.viewpager2)
+    // Coil (Compose image loading)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.gif)
 
-    // Glide
-    implementation(libs.bumptech.glide)
-    ksp(libs.bumptech.glide.ksp)
-    implementation(libs.bumptech.glide.okhttp3)
-    implementation(libs.bumptech.glide.compose)
+    // Markdown rendering (post content)
+    implementation(libs.mikepenz.markdown.renderer)
+    implementation(libs.mikepenz.markdown.renderer.m3)
+    implementation(libs.mikepenz.markdown.renderer.coil3)
 
-    // Markwon (post content formatting)
-    implementation(libs.noties.markwon.core)
-    implementation(libs.noties.markwon.html)
-    implementation(libs.noties.markwon.image.glide)
-    implementation(libs.noties.markwon.linkify)
+    // Ksoup (Kotlin Multiplatform HTML parser, used to convert Kitsu's HTML content to Markdown)
+    implementation(libs.ksoup)
 
     // Koin DI
     implementation(libs.insert.koin.android)
-    implementation(libs.insert.koin.androidx.navigation)
 
     // jsonapi-converter
     implementation(libs.jasminb.jsonapi)
@@ -268,27 +247,9 @@ dependencies {
     // Security Crypto
     implementation(libs.androidx.security.crypto)
 
-    // TreeView
-    implementation(libs.bmelnychuk.treeview)
 
-    // Expandable text view
-    implementation(libs.blogc.expandabletextview)
-
-    // CircleImageView
-    implementation(libs.hdodenhof.circleimageview)
-
-    // Material Rating Bar
-    implementation(libs.zhanghai.materialratingbar)
-
-    // MPAndroidCharts
-    implementation(libs.philjay.mpandroidchart)
-
-    // Photo View
-    implementation(libs.chrisbanes.photoview)
-
-    // Hauler Gesture
-    implementation(libs.futured.hauler)
-    implementation(libs.futured.hauler.databinding)
+    // Zoomable image (Compose)
+    implementation(libs.saket.telephoto.zoomable.image.coil3)
 
     // AboutLibraries
     implementation(libs.mikepenz.aboutlibraries.core)
@@ -297,11 +258,6 @@ dependencies {
 
     // LeakCanary
     debugImplementation(libs.squareup.leakcanary)
-
-    // Glide Transformations (only used for demo screenshots)
-    if (screenshotMode.toBoolean()) {
-        implementation(libs.wasabeef.glide.transformations)
-    }
 
     // Tests
     testImplementation(libs.junit)

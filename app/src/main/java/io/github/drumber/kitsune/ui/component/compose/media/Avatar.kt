@@ -16,23 +16,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import io.github.drumber.kitsune.R
+import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 
 /**
- * A circular avatar image backed by GlideImage.
+ * A circular avatar image backed by Coil's [AsyncImage].
  *
  * Replaces all usages of `de.hdodenhof:circleimageview` (`CircleImageView`) across the app
- * (e.g. `fragment_edit_profile.xml`, `item_character_search_result.xml`) and the existing
- * `GlideImage + clip(CircleShape)` pattern already used in the Compose-based [LoginPage].
+ * and the `AsyncImage + clip(CircleShape)` pattern already used in the Compose-based [LoginPage].
  *
  * @param imageUrl URL of the avatar to load; null or blank shows a person icon placeholder.
  * @param size     Diameter of the circle.
  * @param contentDescription Accessibility label.
  */
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun Avatar(
     modifier: Modifier = Modifier,
@@ -47,26 +43,23 @@ fun Avatar(
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
-        if (imageUrl.isNullOrBlank()) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(size * 0.6f)
-            )
-        } else {
-            GlideImage(
+        // The person icon stays underneath so it acts as placeholder/error state
+        // while the remote avatar is loading or fails to load.
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(size * 0.6f)
+        )
+        if (!imageUrl.isNullOrBlank()) {
+            AsyncImage(
                 model = imageUrl,
                 contentDescription = contentDescription,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(size)
                     .clip(CircleShape)
-            ) {
-                it.placeholder(R.drawable.profile_picture_placeholder)
-                    .error(R.drawable.profile_picture_placeholder)
-                    .circleCrop()
-            }
+            )
         }
     }
 }

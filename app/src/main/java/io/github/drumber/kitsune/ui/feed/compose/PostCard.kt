@@ -1,12 +1,16 @@
 package io.github.drumber.kitsune.ui.feed.compose
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,12 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.feed.Embed
 import io.github.drumber.kitsune.data.presentation.model.feed.Post
@@ -66,6 +72,7 @@ fun PostCard(
     onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteClick: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
@@ -95,8 +102,8 @@ fun PostCard(
         } else {
             PostContentBody(
                 post = post,
-                interactionState = interactionState,
-                onMediaClick = onMediaClick
+                onMediaClick = onMediaClick,
+                onImageClick = onImageClick
             )
         }
         Spacer(Modifier.height(8.dp))
@@ -197,19 +204,22 @@ private fun PostContentWarning(isNsfw: Boolean, onReveal: () -> Unit) {
 @Composable
 private fun PostContentBody(
     post: Post,
-    interactionState: PostInteractionStore.State?,
-    onMediaClick: (Post) -> Unit
+    onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit
 ) {
-    if (!post.content.isNullOrBlank()) {
+    if (!post.contentFormatted.isNullOrBlank() || !post.content.isNullOrBlank()) {
         MarkdownText(
-            content = post.contentFormatted ?: post.content,
-            isHtml = post.contentFormatted != null,
+            content = post.content,
+            contentFormatted = post.contentFormatted,
             modifier = Modifier.fillMaxWidth()
         )
     }
     if (post.imageUrls.isNotEmpty()) {
         Spacer(Modifier.height(8.dp))
-        PostImagePreview(imageUrls = post.imageUrls)
+        PostImagePreview(
+            imageUrls = post.imageUrls,
+            onImageClick = { index -> onImageClick(post.imageUrls, index) }
+        )
     }
     val embed = post.embed
     if (embed != null && (!embed.imageUrl.isNullOrBlank() || !embed.title.isNullOrBlank())) {
@@ -220,37 +230,120 @@ private fun PostContentBody(
         Spacer(Modifier.height(8.dp))
         PostMediaCard(post = post, onMediaClick = onMediaClick)
     }
-    val likerAvatars = interactionState?.likerAvatars.orEmpty()
-    if (likerAvatars.isNotEmpty()) {
-        Spacer(Modifier.height(4.dp))
-        PostLikerAvatars(
-            likerAvatars = likerAvatars,
-            totalLikes = interactionState?.likesCount ?: post.likesCount
-        )
-    }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun PostImagePreview(imageUrls: List<String>) {
-    GlideImage(
-        model = imageUrls.first(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
+private fun PostImagePreview(
+    imageUrls: List<String>,
+    onImageClick: (Int) -> Unit
+) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(16f / 9f)
             .clip(RoundedCornerShape(12.dp))
     ) {
-        it.placeholder(R.drawable.ic_insert_photo_48).error(R.drawable.ic_insert_photo_48)
+        when (imageUrls.size) {
+            1 -> PostPreviewImage(
+                imageUrl = imageUrls[0],
+                index = 0,
+                onClick = onImageClick,
+                modifier = Modifier.fillMaxSize()
+            )
+            2 -> Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                imageUrls.forEachIndexed { index, imageUrl ->
+                    PostPreviewImage(
+                        imageUrl = imageUrl,
+                        index = index,
+                        onClick = onImageClick,
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
+                }
+            }
+            3 -> Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                PostPreviewImage(
+                    imageUrl = imageUrls[0],
+                    index = 0,
+                    onClick = onImageClick,
+                    modifier = Modifier.weight(1f).fillMaxHeight()
+                )
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    imageUrls.drop(1).forEachIndexed { offset, imageUrl ->
+                        PostPreviewImage(
+                            imageUrl = imageUrl,
+                            index = offset + 1,
+                            onClick = onImageClick,
+                            modifier = Modifier.weight(1f).fillMaxWidth()
+                        )
+                    }
+                }
+            }
+            else -> Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                imageUrls.take(4).chunked(2).forEachIndexed { rowIndex, rowImages ->
+                    Row(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        rowImages.forEachIndexed { columnIndex, imageUrl ->
+                            val index = rowIndex * 2 + columnIndex
+                            PostPreviewImage(
+                                imageUrl = imageUrl,
+                                index = index,
+                                remainingCount = if (index == 3) imageUrls.size - 4 else 0,
+                                onClick = onImageClick,
+                                modifier = Modifier.weight(1f).fillMaxHeight()
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
-    if (imageUrls.size > 1) {
-        Text(
-            text = stringResource(R.string.feed_image_count_more, imageUrls.size - 1),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp)
+}
+
+@Composable
+private fun PostPreviewImage(
+    imageUrl: String,
+    index: Int,
+    onClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    remainingCount: Int = 0
+) {
+    Box(modifier = modifier.clickable { onClick(index) }) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_insert_photo_48),
+            error = painterResource(R.drawable.ic_insert_photo_48),
+            modifier = Modifier.fillMaxSize()
         )
+        if (remainingCount > 0) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.Black.copy(alpha = 0.55f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.feed_image_count_more, remainingCount),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 
@@ -334,11 +427,19 @@ private fun PostMediaCard(post: Post, onMediaClick: (Post) -> Unit) {
 @Composable
 private fun PostLikerAvatars(likerAvatars: List<String>, totalLikes: Int) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        likerAvatars.take(3).forEach { url ->
-            Avatar(imageUrl = url, size = 20.dp, modifier = Modifier.padding(end = 2.dp))
+        val visibleLikers = likerAvatars.take(3)
+        Row(horizontalArrangement = Arrangement.spacedBy((-6).dp)) {
+            visibleLikers.forEachIndexed { index, url ->
+                Avatar(
+                    imageUrl = url,
+                    size = 20.dp,
+                    modifier = Modifier.zIndex((visibleLikers.size - index).toFloat())
+                )
+            }
         }
-        val remaining = totalLikes - likerAvatars.size
+        val remaining = (totalLikes - visibleLikers.size).coerceAtLeast(0)
         if (remaining > 0) {
+            Spacer(Modifier.width(6.dp))
             Text(
                 text = stringResource(R.string.feed_likers_more, remaining),
                 style = MaterialTheme.typography.labelSmall,
@@ -357,31 +458,40 @@ private fun PostCardFooter(
     val isLiked = interactionState?.isLiked ?: false
     val likesCount = interactionState?.likesCount ?: post.likesCount
     val commentsCount = interactionState?.commentsCount ?: post.commentsCount
+    val likerAvatars = interactionState?.likerAvatars.orEmpty()
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = { onLikeClick(post, !isLiked) }, modifier = Modifier.size(36.dp)) {
-            Icon(
-                imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = stringResource(
-                    if (isLiked) R.string.cd_unlike_post else R.string.cd_like_post,
-                    likesCount
-                ),
-                tint = if (isLiked) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { onLikeClick(post, !isLiked) }, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = stringResource(
+                        if (isLiked) R.string.cd_unlike_post else R.string.cd_like_post,
+                        likesCount
+                    ),
+                    tint = if (isLiked) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+            Text(
+                text = likesCount.toString(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (likerAvatars.isNotEmpty()) {
+                Spacer(Modifier.width(8.dp))
+                PostLikerAvatars(likerAvatars = likerAvatars, totalLikes = likesCount)
+            }
         }
-        Text(
-            text = likesCount.toString(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.width(16.dp))
+        Spacer(Modifier.width(12.dp))
         Icon(
             imageVector = Icons.Outlined.ChatBubbleOutline,
             contentDescription = stringResource(R.string.cd_comments_count, commentsCount),

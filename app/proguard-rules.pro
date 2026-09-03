@@ -33,9 +33,6 @@
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn org.slf4j.impl.StaticMDCBinder
 
-# Markwon (optional commonmark strikethrough extension is not on the classpath)
--dontwarn org.commonmark.ext.gfm.strikethrough.Strikethrough
-
 # Jackson
 -keepnames class com.fasterxml.jackson.** { *; }
 -keepclassmembers class * {
@@ -48,9 +45,6 @@
     @com.github.jasminb.jsonapi.annotations.* *;
 }
 -keep class * implements com.github.jasminb.jsonapi.ResourceIdHandler
-
-# MPAndroidChart
--keep class com.github.mikephil.charting.** { *; }
 
 ############################################
 # Kitsune specific rules

@@ -1,8 +1,5 @@
 package io.github.drumber.kitsune.ui.profile.about
 
-import android.widget.LinearLayout
-import android.widget.LinearLayout.LayoutParams.MATCH_PARENT
-import android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,9 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.tabs.TabLayout
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.character.Character
 import io.github.drumber.kitsune.data.presentation.model.media.Anime
@@ -59,6 +55,7 @@ fun ProfileAboutScreen(
     isRefreshing: Boolean,
     isInitialLoading: Boolean,
     followState: UserProfileUiState? = null,
+    lazyListState: LazyListState = rememberLazyListState(),
     onRefresh: () -> Unit,
     onFollowClick: () -> Unit = {},
     onFollowingClick: () -> Unit,
@@ -79,6 +76,7 @@ fun ProfileAboutScreen(
             user = user,
             isInitialLoading = isInitialLoading,
             followState = followState,
+            lazyListState = lazyListState,
             onFollowClick = onFollowClick,
             onFollowingClick = onFollowingClick,
             onFollowersClick = onFollowersClick,
@@ -95,6 +93,7 @@ private fun ProfileAboutContent(
     user: User,
     isInitialLoading: Boolean,
     followState: UserProfileUiState?,
+    lazyListState: LazyListState,
     onFollowClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onFollowersClick: () -> Unit,
@@ -103,7 +102,7 @@ private fun ProfileAboutContent(
     onCharacterClick: (Character) -> Unit,
     onProfileLinkClick: (ProfileLink) -> Unit
 ) {
-    LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(state = lazyListState, contentPadding = PaddingValues(bottom = 16.dp)) {
         if (!user.title.isNullOrBlank()) {
                 item(key = "title_badge") { UserTitleBadge(title = user.title!!) }
             }
@@ -400,34 +399,12 @@ private fun StatsCard(
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val statsSectionRef = remember { arrayOfNulls<ProfileStatsSection>(1) }
-
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.outlinedCardColors(),
         border = CardDefaults.outlinedCardBorder()
     ) {
-        AndroidView(
-            factory = { ctx ->
-                val tabLayout = TabLayout(ctx)
-                val viewPager = ViewPager2(ctx).apply {
-                    (getChildAt(0) as? androidx.recyclerview.widget.RecyclerView)
-                        ?.isNestedScrollingEnabled = false
-                }
-                val section = ProfileStatsSection(viewPager, tabLayout)
-                section.init(true)
-                statsSectionRef[0] = section
-                LinearLayout(ctx).apply {
-                    orientation = LinearLayout.VERTICAL
-                    addView(tabLayout, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-                    addView(viewPager, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-                }
-            },
-            update = {
-                statsSectionRef[0]?.submitStats(stats, false)
-                statsSectionRef[0]?.setLoading(isLoading)
-            }
-        )
+        ProfileStatsPager(stats = stats, isLoading = isLoading)
     }
 }
 

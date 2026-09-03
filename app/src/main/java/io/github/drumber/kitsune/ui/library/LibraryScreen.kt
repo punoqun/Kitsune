@@ -52,6 +52,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -71,6 +73,7 @@ import io.github.drumber.kitsune.ui.component.compose.list.PagingEmptyContent
 import io.github.drumber.kitsune.ui.component.compose.list.PagingErrorContent
 import io.github.drumber.kitsune.ui.component.compose.list.PagingLoadingContent
 import io.github.drumber.kitsune.ui.component.compose.media.MediaCover
+import io.github.drumber.kitsune.ui.navigation.LocalReselectEvents
 import kotlinx.coroutines.delay
 
 private val libraryStatusFilters = listOf(
@@ -105,10 +108,17 @@ fun LibraryScreen(
 ) {
     var searchQuery by rememberSaveable { mutableStateOf(uiState.filter.searchQuery) }
     var searchActive by rememberSaveable { mutableStateOf(uiState.filter.searchQuery.isNotBlank()) }
+    val scrollToTopEvents = LocalReselectEvents.current
 
     LaunchedEffect(searchQuery) {
         delay(300L)
         onSearch(searchQuery)
+    }
+
+    LaunchedEffect(Unit) {
+        scrollToTopEvents.collect {
+            gridState.animateScrollToItem(0)
+        }
     }
 
     LaunchedEffect(uiState.filter.createTime) {
@@ -230,6 +240,14 @@ private fun LibrarySearchField(
     onQueryChange: (String) -> Unit,
     onClose: () -> Unit
 ) {
+    val focusRequester = remember { FocusRequester() }
+
+    // Only steal focus when the field is opened empty, so a query restored across
+    // configuration change or process death doesn't re-open the keyboard.
+    LaunchedEffect(Unit) {
+        if (query.isEmpty()) focusRequester.requestFocus()
+    }
+
     TextField(
         value = query,
         onValueChange = onQueryChange,
@@ -246,7 +264,9 @@ private fun LibrarySearchField(
                 Icon(Icons.Default.Remove, stringResource(R.string.action_close))
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester)
     )
 }
 

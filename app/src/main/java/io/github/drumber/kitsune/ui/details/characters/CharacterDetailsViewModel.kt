@@ -42,12 +42,25 @@ class CharacterDetailsViewModel(
     val uiState
         get() = _uiState.asStateFlow()
 
+    /** Initialises the screen by id without requiring a pre-fetched [Character] object. */
+    fun initCharacterById(id: String) {
+        initCharacter(
+            Character(
+                id = id, slug = null, name = null, names = null,
+                otherNames = null, malId = null, description = null,
+                image = null, mediaCharacters = null
+            )
+        )
+    }
+
     fun initCharacter(character: Character) {
         if (_characterFlow.replayCache.isNotEmpty() && _characterFlow.replayCache.firstOrNull()?.id == character.id) return
 
         viewModelScope.launch {
             _characterFlow.emit(character)
-
+            // Drop the previous character's favorite so a stale value cannot be toggled while the
+            // new one is still loading (this view model is shared across sheet instances).
+            _favoriteFlow.emit(null)
             launch(Dispatchers.IO) fetchFavorite@{
                 val characterId = character.id
                 val favorite = fetchFavorite(characterId)

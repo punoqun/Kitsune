@@ -4,13 +4,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -26,9 +32,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.drumber.kitsune.R
+import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.component.compose.list.KitsunePullToRefreshBox
 import kotlinx.coroutines.launch
 
@@ -40,15 +48,29 @@ fun MainScreen(
     onRefresh: (isAnime: Boolean) -> Unit,
     onSearchClick: () -> Unit,
     modifier: Modifier = Modifier,
-    pagerState: PagerState = rememberPagerState { 2 }
+    pagerState: PagerState = rememberPagerState { 2 },
+    /** Hoisted so that callers (e.g. the Fragment) can programmatically scroll to top. */
+    animeScrollState: ScrollState = rememberScrollState(),
+    /** Hoisted so that callers (e.g. the Fragment) can programmatically scroll to top. */
+    mangaScrollState: ScrollState = rememberScrollState()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val tabTitles = listOf(stringResource(R.string.anime), stringResource(R.string.manga))
 
     Scaffold(
         modifier = modifier,
+        // The activity is edge-to-edge and only consumes the bottom inset before handing the
+        // window over to the nav host, so the top/horizontal insets are applied here. The plain
+        // Column top bar gets none automatically (unlike Material 3 TopAppBar).
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         topBar = {
-            Column {
+            Column(
+                modifier = Modifier.windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(
+                        WindowInsetsSides.Top + WindowInsetsSides.Horizontal
+                    )
+                )
+            ) {
                 SearchBarButton(
                     onClick = onSearchClick,
                     modifier = Modifier
@@ -80,10 +102,11 @@ fun MainScreen(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
+                val scrollState = if (page == 0) animeScrollState else mangaScrollState
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                 ) {
                     when (page) {
                         0 -> animeExploreScreenContent()
@@ -101,7 +124,9 @@ private fun SearchBarButton(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier
+            .testTag(KitsuneTestTags.HomeSearchBar)
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.extraLarge,
         tonalElevation = 3.dp,
         color = MaterialTheme.colorScheme.surfaceContainerHigh

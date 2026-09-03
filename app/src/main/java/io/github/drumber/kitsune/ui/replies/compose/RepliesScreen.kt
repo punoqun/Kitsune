@@ -238,10 +238,10 @@ private fun ParentCommentHeader(
                 }
             }
         }
-        if (!comment.content.isNullOrBlank()) {
+        if (!comment.contentFormatted.isNullOrBlank() || !comment.content.isNullOrBlank()) {
             MarkdownText(
-                content = comment.contentFormatted ?: comment.content,
-                isHtml = comment.contentFormatted != null,
+                content = comment.content,
+                contentFormatted = comment.contentFormatted,
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
             )
         }

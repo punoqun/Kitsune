@@ -21,17 +21,19 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.character.Character
 import io.github.drumber.kitsune.data.presentation.model.media.production.Casting
+import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
 import io.github.drumber.kitsune.ui.component.compose.list.PagingColumn
@@ -73,7 +75,9 @@ fun CharactersScreen(
             }
             PagingColumn(
                 items = items,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(KitsuneTestTags.CharactersList),
                 contentPadding = PaddingValues(
                     start = paddingValues.calculateLeftPadding(layoutDir),
                     end = paddingValues.calculateRightPadding(layoutDir),
@@ -110,25 +114,25 @@ private fun LanguageFilterRow(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun CastingItem(casting: Casting, onCharacterClick: (Character) -> Unit) {
     val character = casting.character ?: return
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(KitsuneTestTags.CharacterItem)
             .clickable { onCharacterClick(character) }
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        GlideImage(
+        AsyncImage(
             model = character.image?.original,
             contentDescription = character.name,
             contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_insert_photo_48),
+            error = painterResource(R.drawable.ic_insert_photo_48),
             modifier = Modifier.size(56.dp)
-        ) {
-            it.placeholder(R.drawable.ic_insert_photo_48).error(R.drawable.ic_insert_photo_48)
-        }
+        )
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -149,15 +153,14 @@ private fun CastingItem(casting: Casting, onCharacterClick: (Character) -> Unit)
         }
         casting.person?.let { person ->
             Spacer(Modifier.width(12.dp))
-            GlideImage(
+            AsyncImage(
                 model = person.image?.original,
                 contentDescription = person.name,
                 contentScale = ContentScale.Crop,
+                placeholder = painterResource(R.drawable.ic_insert_photo_48),
+                error = painterResource(R.drawable.ic_insert_photo_48),
                 modifier = Modifier.size(40.dp)
-            ) {
-                it.placeholder(R.drawable.ic_insert_photo_48)
-                    .error(R.drawable.ic_insert_photo_48)
-            }
+            )
         }
     }
 }

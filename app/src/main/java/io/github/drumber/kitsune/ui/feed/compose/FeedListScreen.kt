@@ -3,12 +3,15 @@ package io.github.drumber.kitsune.ui.feed.compose
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -56,9 +59,11 @@ fun FeedListScreen(
     onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteClick: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
+    lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -71,7 +76,11 @@ fun FeedListScreen(
         }
     }
 
-    Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { padding ->
         if (loginRequired) {
             FeedLoginRequiredContent(modifier = Modifier.padding(padding))
         } else {
@@ -88,10 +97,12 @@ fun FeedListScreen(
                     revealedPosts = revealedPosts,
                     nsfwAllowed = nsfwAllowed,
                     currentUserId = currentUserId,
+                    lazyListState = lazyListState,
                     onPostClick = onPostClick,
                     onLikeClick = onLikeClick,
                     onRevealClick = onRevealClick,
                     onMediaClick = onMediaClick,
+                    onImageClick = onImageClick,
                     onEditClick = onEditClick,
                     onDeleteRequest = { postToDelete = it },
                     onAuthorClick = onAuthorClick
@@ -128,10 +139,12 @@ private fun FeedPostColumn(
     revealedPosts: Set<String>,
     nsfwAllowed: Boolean,
     currentUserId: String?,
+    lazyListState: LazyListState,
     onPostClick: (Post) -> Unit,
     onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteRequest: (Post) -> Unit,
     onAuthorClick: (String) -> Unit
@@ -152,7 +165,7 @@ private fun FeedPostColumn(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 PagingEmptyContent()
             }
-        else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+        else -> LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize()) {
             if (hasPinnedPost) {
                 item(key = "pinned_${pinnedPost!!.id}") {
                     PostCard(
@@ -165,6 +178,7 @@ private fun FeedPostColumn(
                         onLikeClick = onLikeClick,
                         onRevealClick = onRevealClick,
                         onMediaClick = onMediaClick,
+                        onImageClick = onImageClick,
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
                         onAuthorClick = onAuthorClick
@@ -183,6 +197,7 @@ private fun FeedPostColumn(
                         onLikeClick = onLikeClick,
                         onRevealClick = onRevealClick,
                         onMediaClick = onMediaClick,
+                        onImageClick = onImageClick,
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
                         onAuthorClick = onAuthorClick

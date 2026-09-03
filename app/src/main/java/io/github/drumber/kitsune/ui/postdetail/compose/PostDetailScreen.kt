@@ -67,6 +67,7 @@ fun PostDetailScreen(
     onPostLikeClick: () -> Unit,
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditPost: (Post) -> Unit,
     onDeletePost: () -> Unit,
     onAuthorClick: (String) -> Unit,
@@ -120,6 +121,7 @@ fun PostDetailScreen(
             onPostLikeClick = onPostLikeClick,
             onRevealPost = onRevealPost,
             onMediaClick = onMediaClick,
+            onImageClick = onImageClick,
             onEditPost = onEditPost,
             onDeletePost = { showDeletePost = true },
             onAuthorClick = onAuthorClick,
@@ -158,6 +160,7 @@ private fun PostDetailContent(
     onPostLikeClick: () -> Unit,
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditPost: (Post) -> Unit,
     onDeletePost: () -> Unit,
     onAuthorClick: (String) -> Unit,
@@ -182,6 +185,7 @@ private fun PostDetailContent(
                     onPostLikeClick = onPostLikeClick,
                     onRevealPost = onRevealPost,
                     onMediaClick = onMediaClick,
+                    onImageClick = onImageClick,
                     onEditPost = onEditPost,
                     onDeletePost = onDeletePost,
                     onAuthorClick = onAuthorClick
@@ -233,6 +237,7 @@ private fun PostDetailHeader(
     onPostLikeClick: () -> Unit,
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
     onEditPost: (Post) -> Unit,
     onDeletePost: () -> Unit,
     onAuthorClick: (String) -> Unit
@@ -251,6 +256,7 @@ private fun PostDetailHeader(
         onLikeClick = { _, _ -> onPostLikeClick() },
         onRevealClick = { onRevealPost() },
         onMediaClick = onMediaClick,
+        onImageClick = onImageClick,
         onEditClick = onEditPost,
         onDeleteClick = { onDeletePost() },
         onAuthorClick = onAuthorClick

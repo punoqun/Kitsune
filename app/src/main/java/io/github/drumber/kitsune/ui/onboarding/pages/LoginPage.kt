@@ -22,10 +22,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -33,10 +30,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.source.local.user.model.LocalUser
+import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.ui.onboarding.components.OnboardingNavigationControls
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
 
@@ -154,7 +150,6 @@ private fun HeaderSection(modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun LoggedInUserSection(
     modifier: Modifier = Modifier,
@@ -170,17 +165,10 @@ private fun LoggedInUserSection(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(12.dp)
             ) {
-                GlideImage(
-                    model = localUser.avatar?.originalOrDown(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color.Gray)
-                ) {
-                    it.placeholder(R.drawable.profile_picture_placeholder)
-                }
+                Avatar(
+                    imageUrl = localUser.avatar?.originalOrDown(),
+                    size = 48.dp
+                )
                 Spacer(Modifier.width(16.dp))
                 Column {
                     Text(

@@ -39,11 +39,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.library.LibraryEntryWithModification
 import io.github.drumber.kitsune.data.presentation.model.library.getStringResId
@@ -53,6 +54,7 @@ import io.github.drumber.kitsune.data.presentation.model.media.category.Category
 import io.github.drumber.kitsune.data.presentation.model.media.relationship.MediaRelationship
 import io.github.drumber.kitsune.data.presentation.model.reaction.MediaReaction
 import io.github.drumber.kitsune.data.presentation.model.user.Favorite
+import io.github.drumber.kitsune.ui.KitsuneTestTags
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
 import io.github.drumber.kitsune.ui.component.compose.media.ExpandableText
@@ -124,7 +126,7 @@ fun DetailsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DetailsTopBar(
     media: Media?,
@@ -137,7 +139,7 @@ private fun DetailsTopBar(
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior
 ) {
     Box {
-        GlideImage(
+        AsyncImage(
             model = media?.coverImageUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
@@ -202,6 +204,7 @@ private fun DetailsContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .testTag(KitsuneTestTags.DetailsContent)
             .padding(paddingValues)
             .verticalScroll(rememberScrollState())
             .padding(15.dp)
@@ -228,6 +231,7 @@ private fun DetailsContent(
                 text = media?.description,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .testTag(KitsuneTestTags.DetailsDescription)
                     .padding(bottom = 24.dp)
             )
         }
@@ -262,7 +266,6 @@ private fun DetailsContent(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun MediaHeaderSection(
     media: Media?,
@@ -276,16 +279,16 @@ private fun MediaHeaderSection(
             .fillMaxWidth()
             .padding(bottom = 10.dp)
     ) {
-        GlideImage(
+        AsyncImage(
             model = media?.posterImageUrl,
             contentDescription = media?.title,
             contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_insert_photo_48),
+            error = painterResource(R.drawable.ic_insert_photo_48),
             modifier = Modifier
                 .size(width = 106.dp, height = 150.dp)
                 .clickable(onClick = onPosterClick)
-        ) {
-            it.placeholder(R.drawable.ic_insert_photo_48).error(R.drawable.ic_insert_photo_48)
-        }
+        )
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             val isManga = media !is Anime
@@ -314,6 +317,7 @@ private fun CategoryChipsRow(categories: List<Category>, onCategoryClick: (Categ
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(KitsuneTestTags.DetailsCategories)
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -335,11 +339,21 @@ private fun NavigationButtonsSection(
     onNavigateToFeed: () -> Unit
 ) {
     val episodeBtnText = if (media is Anime) R.string.title_episodes else R.string.title_chapters
-    OutlinedButton(onClick = onNavigateToEpisodes, modifier = Modifier.fillMaxWidth()) {
+    OutlinedButton(
+        onClick = onNavigateToEpisodes,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(KitsuneTestTags.DetailsEpisodesButton)
+    ) {
         Text(stringResource(episodeBtnText))
     }
     Spacer(Modifier.height(8.dp))
-    OutlinedButton(onClick = onNavigateToCharacters, modifier = Modifier.fillMaxWidth()) {
+    OutlinedButton(
+        onClick = onNavigateToCharacters,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(KitsuneTestTags.DetailsCharactersButton)
+    ) {
         Text(stringResource(R.string.title_characters))
     }
     Spacer(Modifier.height(8.dp))
