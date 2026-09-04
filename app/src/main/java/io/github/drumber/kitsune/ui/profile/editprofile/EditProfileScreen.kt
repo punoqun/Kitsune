@@ -148,7 +148,10 @@ fun EditProfileScreen(
                     title = { Text(stringResource(R.string.title_edit_profile)) },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.Close, contentDescription = null)
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(R.string.action_close)
+                            )
                         }
                     }
                 )
@@ -240,7 +243,10 @@ private fun EditProfileForm(
             trailingIcon = {
                 if (profileState.location.isNotEmpty()) {
                     IconButton(onClick = { onProfileStateChange(profileState.copy(location = "")) }) {
-                        Icon(Icons.Default.Close, contentDescription = null)
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.action_remove)
+                        )
                     }
                 }
             },
@@ -346,7 +352,7 @@ private fun BirthdayField(
             if (birthday.isEmpty()) {
                 Icon(
                     painter = painterResource(R.drawable.ic_calendar_month_24),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.profile_data_birthday),
                     modifier = Modifier.clickable {
                         onBirthdayClick(
                             birthday.parseDate()?.time
@@ -356,7 +362,10 @@ private fun BirthdayField(
                 )
             } else {
                 IconButton(onClick = onClearBirthday) {
-                    Icon(Icons.Default.Close, contentDescription = null)
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(R.string.action_remove)
+                    )
                 }
             }
         },
@@ -489,11 +498,14 @@ private fun WaifuFields(
                     IconButton(onClick = onClearCharacter) {
                         Icon(
                             painterResource(R.drawable.ic_heart_broken_24),
-                            contentDescription = null
+                            contentDescription = stringResource(R.string.action_remove)
                         )
                     }
                 } else {
-                    Icon(painterResource(R.drawable.ic_search_24), contentDescription = null)
+                    Icon(
+                        painterResource(R.drawable.ic_search_24),
+                        contentDescription = stringResource(R.string.hint_search)
+                    )
                 }
             },
             modifier = Modifier
@@ -568,7 +580,7 @@ private fun CharacterSearchOverlay(
                 IconButton(onClick = onDismiss) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null
+                        contentDescription = stringResource(R.string.action_back)
                     )
                 }
                 OutlinedTextField(

@@ -257,7 +257,13 @@ private fun ProfileTopBar(
         defaultUseDarkIcons = surfaceUsesDarkStatusBarIcons
     )
 
-    Box {
+    Box(
+        modifier = Modifier.clickable(
+            enabled = hasCoverImage,
+            onClickLabel = stringResource(R.string.profile_cover_image_description),
+            onClick = onCoverClick
+        )
+    ) {
         // Cover image sits behind the toolbar; fades out as the bar collapses.
         AsyncImage(
             model = user?.coverImage?.originalOrDown(),
@@ -270,11 +276,6 @@ private fun ProfileTopBar(
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer { alpha = 1f - collapsedFraction }
-                .clickable(
-                    enabled = hasCoverImage,
-                    onClickLabel = stringResource(R.string.profile_cover_image_description),
-                    onClick = onCoverClick
-                )
         )
         if (hasCoverImage) {
             Box(
@@ -390,6 +391,11 @@ private fun ProfileTopBar(
                 titleContentColor = toolbarContentColor,
                 actionIconContentColor = toolbarContentColor
             ),
+            expandedHeight = if (hasCoverImage) {
+                TopAppBarDefaults.LargeAppBarExpandedHeight
+            } else {
+                112.dp
+            },
             scrollBehavior = scrollBehavior
         )
     }
