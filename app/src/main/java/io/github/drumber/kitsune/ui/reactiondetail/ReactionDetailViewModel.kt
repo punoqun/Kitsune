@@ -94,7 +94,12 @@ class ReactionDetailViewModel(
             val event = try {
                 val updatedReaction = mediaReactionRepository.updateReaction(reaction.id, reactionText)
                 updatedReaction?.let {
-                    _reaction.update { it }
+                    _reaction.update { current ->
+                        (current ?: reaction).copy(
+                            reaction = reactionText,
+                            content = reactionText
+                        )
+                    }
                     Event.UpdateSuccess
                 } ?: Event.UpdateFailed
             } catch (e: Exception) {

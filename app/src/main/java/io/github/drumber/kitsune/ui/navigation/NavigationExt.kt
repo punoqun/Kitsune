@@ -14,6 +14,7 @@ object NavResults {
     const val LIBRARY_ENTRY_UPDATED = "library_entry_updated"
     const val REFRESH_FAVORITES = "refresh_favorites"
     const val POST_CREATED = "post_created"
+    const val REACTION_CHANGED = "reaction_changed"
 }
 
 /**

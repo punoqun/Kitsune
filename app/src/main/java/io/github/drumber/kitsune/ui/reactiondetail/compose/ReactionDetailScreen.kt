@@ -15,11 +15,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -52,10 +55,13 @@ fun ReactionDetailScreen(
     reaction: MediaReaction?,
     isLoading: Boolean,
     isUpvoted: Boolean,
+    isOwn: Boolean,
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
     onNavigateUp: () -> Unit,
     onUpvote: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
     onAuthorClick: (String) -> Unit,
     onMediaClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -76,6 +82,22 @@ fun ReactionDetailScreen(
             KitsuneTopAppBar(
                 title = { Text(stringResource(R.string.title_reaction)) },
                 navigationIcon = { KitsuneBackButton(onNavigateUp = onNavigateUp) },
+                actions = {
+                    if (isOwn) {
+                        IconButton(onClick = onEdit) {
+                            Icon(
+                                Icons.Filled.Edit,
+                                contentDescription = stringResource(R.string.action_edit)
+                            )
+                        }
+                        IconButton(onClick = onDelete) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = stringResource(R.string.action_delete)
+                            )
+                        }
+                    }
+                },
                 scrollBehavior = scrollBehavior
             )
         },

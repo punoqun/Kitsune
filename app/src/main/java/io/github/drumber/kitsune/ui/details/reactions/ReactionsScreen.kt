@@ -21,6 +21,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -46,6 +48,7 @@ fun ReactionsScreen(
     title: String,
     items: LazyPagingItems<MediaReaction>,
     currentUserId: String?,
+    snackbarHostState: SnackbarHostState,
     onNavigateUp: () -> Unit,
     onAddReactionClick: () -> Unit,
     onReactionClick: (MediaReaction) -> Unit,
@@ -71,6 +74,7 @@ fun ReactionsScreen(
                 )
             }
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
         val isRefreshing = items.loadState.refresh is LoadState.Loading && items.itemCount > 0

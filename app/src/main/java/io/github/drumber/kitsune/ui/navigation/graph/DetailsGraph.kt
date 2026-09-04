@@ -54,6 +54,8 @@ import io.github.drumber.kitsune.ui.details.feed.MediaFeedViewModel
 import io.github.drumber.kitsune.ui.details.reactions.ReactionsScreen
 import io.github.drumber.kitsune.ui.details.reactions.ReactionsViewModel
 import io.github.drumber.kitsune.ui.navigation.Routes
+import io.github.drumber.kitsune.ui.navigation.NavResultEffect
+import io.github.drumber.kitsune.ui.navigation.NavResults
 import io.github.drumber.kitsune.ui.navigation.navigateSafe
 import io.github.drumber.kitsune.ui.navigation.toMediaListRoute
 import kotlinx.coroutines.launch
@@ -465,11 +467,62 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
         }
 
         val items = viewModel.dataSource.collectAsLazyPagingItems()
+        val snackbarHostState = remember { SnackbarHostState() }
+        val loginRequired = stringResource(R.string.reaction_login_required)
+        val addToLibraryRequired =
+            stringResource(R.string.reaction_add_to_library_required)
+        val reactionUpdated = stringResource(R.string.reaction_updated)
+        val reactionDeleted = stringResource(R.string.reaction_deleted)
+        val actionFailed = stringResource(R.string.error_something_wrong)
+        val upvoteLoginRequired = stringResource(R.string.reactions_upvote_login_required)
+        val upvoteFailed = stringResource(R.string.reactions_upvote_failed)
+
+        backStackEntry.NavResultEffect<Boolean>(NavResults.REACTION_CHANGED) {
+            items.refresh()
+        }
+
+        LaunchedEffect(Unit) {
+            viewModel.editEvents.collect { event ->
+                when (event) {
+                    is ReactionsViewModel.EditEvent.Created -> {
+                        items.refresh()
+                        navController.navigateSafe(Routes.ReactionDetail(event.reactionId))
+                    }
+                    ReactionsViewModel.EditEvent.Updated -> {
+                        items.refresh()
+                        snackbarHostState.showSnackbar(reactionUpdated)
+                    }
+                    ReactionsViewModel.EditEvent.Deleted -> {
+                        items.refresh()
+                        snackbarHostState.showSnackbar(reactionDeleted)
+                    }
+                    ReactionsViewModel.EditEvent.LoginRequired ->
+                        snackbarHostState.showSnackbar(loginRequired)
+                    ReactionsViewModel.EditEvent.AddToLibraryRequired ->
+                        snackbarHostState.showSnackbar(addToLibraryRequired)
+                    ReactionsViewModel.EditEvent.Failed ->
+                        snackbarHostState.showSnackbar(actionFailed)
+                }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            viewModel.upvoteEvents.collect { event ->
+                when (event) {
+                    is ReactionsViewModel.UpvoteEvent.Success -> items.refresh()
+                    ReactionsViewModel.UpvoteEvent.LoginRequired ->
+                        snackbarHostState.showSnackbar(upvoteLoginRequired)
+                    ReactionsViewModel.UpvoteEvent.Failed ->
+                        snackbarHostState.showSnackbar(upvoteFailed)
+                }
+            }
+        }
 
         ReactionsScreen(
             title = stringResource(R.string.title_reactions),
             items = items,
             currentUserId = viewModel.currentUserId,
+            snackbarHostState = snackbarHostState,
             onNavigateUp = { navController.navigateUp() },
             onAddReactionClick = { showAddDialog = true },
             onReactionClick = { reaction ->

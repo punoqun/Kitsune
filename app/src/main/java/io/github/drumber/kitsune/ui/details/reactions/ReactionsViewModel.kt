@@ -35,7 +35,7 @@ class ReactionsViewModel(
     sealed interface EditEvent {
         data object LoginRequired : EditEvent
         data object AddToLibraryRequired : EditEvent
-        data object Created : EditEvent
+        data class Created(val reactionId: String) : EditEvent
         data object Updated : EditEvent
         data object Deleted : EditEvent
         data object Failed : EditEvent
@@ -99,17 +99,21 @@ class ReactionsViewModel(
         viewModelScope.launch {
             val event = try {
                 val libraryEntryId = findLibraryEntryId(userId, key)
-                when {
-                    libraryEntryId == null -> EditEvent.AddToLibraryRequired
-                    mediaReactionRepository.createReaction(
+                if (libraryEntryId == null) {
+                    EditEvent.AddToLibraryRequired
+                } else {
+                    val createdReaction = mediaReactionRepository.createReaction(
                         userId = userId,
                         libraryEntryId = libraryEntryId,
                         isAnime = key.isAnime,
                         mediaId = key.mediaId,
                         reactionText = reactionText
-                    ) != null -> EditEvent.Created
-
-                    else -> EditEvent.Failed
+                    )
+                    if (createdReaction != null) {
+                        EditEvent.Created(createdReaction.id)
+                    } else {
+                        EditEvent.Failed
+                    }
                 }
             } catch (e: Exception) {
                 logE("Failed to create reaction for media '${key.mediaId}'.", e)

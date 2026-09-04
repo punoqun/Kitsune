@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -99,7 +101,16 @@ private fun LanguageFilterRow(
     selectedLanguage: String?,
     onLanguageSelected: (String) -> Unit
 ) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(languages, selectedLanguage) {
+        val selectedIndex = languages.indexOf(selectedLanguage)
+        if (selectedIndex >= 0) {
+            listState.animateScrollToItem(selectedIndex)
+        }
+    }
+
     LazyRow(
+        state = listState,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         modifier = Modifier.fillMaxWidth()
     ) {

@@ -6,8 +6,12 @@ import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -87,7 +91,11 @@ fun NavGraphBuilder.socialGraph(navController: NavHostController) {
     composable<Routes.Replies> { backStackEntry ->
         RepliesDestination(backStackEntry, navController)
     }
-    composable<Routes.ReactionDetail> { backStackEntry ->
+    composable<Routes.ReactionDetail>(
+        deepLinks = listOf(
+            navDeepLink { uriPattern = "kitsune://reaction/{reactionId}" }
+        )
+    ) { backStackEntry ->
         ReactionDetailDestination(backStackEntry, navController)
     }
     composable<Routes.Groups> {
@@ -458,9 +466,14 @@ private fun ReactionDetailDestination(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isUpvoted by viewModel.isUpvoted.collectAsStateWithLifecycle()
     var snackbarMessage by remember { mutableStateOf<String?>(null) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var editText by remember { mutableStateOf("") }
 
     val loginRequiredMsg = stringResource(R.string.reactions_upvote_login_required)
     val failedMsg = stringResource(R.string.reactions_upvote_failed)
+    val reactionUpdatedMsg = stringResource(R.string.reaction_updated)
+    val reactionActionFailedMsg = stringResource(R.string.error_something_wrong)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -468,10 +481,17 @@ private fun ReactionDetailDestination(
                 is ReactionDetailViewModel.Event.UpvoteSuccess -> null
                 ReactionDetailViewModel.Event.LoginRequired -> loginRequiredMsg
                 ReactionDetailViewModel.Event.UpvoteFailed -> failedMsg
-                ReactionDetailViewModel.Event.UpdateSuccess,
-                ReactionDetailViewModel.Event.UpdateFailed,
-                ReactionDetailViewModel.Event.DeleteSuccess,
-                ReactionDetailViewModel.Event.DeleteFailed -> null
+                ReactionDetailViewModel.Event.UpdateSuccess -> {
+                    navController.setNavResult(NavResults.REACTION_CHANGED, true)
+                    reactionUpdatedMsg
+                }
+                ReactionDetailViewModel.Event.UpdateFailed -> reactionActionFailedMsg
+                ReactionDetailViewModel.Event.DeleteSuccess -> {
+                    navController.setNavResult(NavResults.REACTION_CHANGED, true)
+                    navController.navigateUp()
+                    null
+                }
+                ReactionDetailViewModel.Event.DeleteFailed -> reactionActionFailedMsg
             }
         }
     }
@@ -480,10 +500,18 @@ private fun ReactionDetailDestination(
         reaction = reaction,
         isLoading = isLoading,
         isUpvoted = isUpvoted,
+        isOwn = reaction?.authorId != null &&
+            reaction?.authorId == viewModel.currentUserId(),
         snackbarMessage = snackbarMessage,
         onSnackbarShown = { snackbarMessage = null },
         onNavigateUp = { navController.navigateUp() },
         onUpvote = { viewModel.upvote() },
+        onEdit = {
+            editText = reaction?.reaction?.takeIf { it.isNotBlank() }
+                ?: reaction?.content.orEmpty()
+            showEditDialog = true
+        },
+        onDelete = { showDeleteDialog = true },
         onAuthorClick = { userId ->
             navController.navigateSafe(Routes.UserProfile(userId))
         },
@@ -499,6 +527,54 @@ private fun ReactionDetailDestination(
             }
         }
     )
+
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text(stringResource(R.string.reaction_compose_edit_title)) },
+            text = {
+                OutlinedTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    maxLines = 4
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    reaction?.let { viewModel.updateReaction(it, editText) }
+                    showEditDialog = false
+                }) {
+                    Text(stringResource(R.string.action_save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.delete_reaction_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_reaction_confirm_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    reaction?.let(viewModel::deleteReaction)
+                    showDeleteDialog = false
+                }) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------
