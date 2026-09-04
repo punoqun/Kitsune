@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudOff
@@ -59,6 +60,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -110,7 +112,19 @@ fun LibraryScreen(
 ) {
     var searchQuery by rememberSaveable { mutableStateOf(uiState.filter.searchQuery) }
     var searchActive by rememberSaveable { mutableStateOf(uiState.filter.searchQuery.isNotBlank()) }
+    var showKindDialog by remember { mutableStateOf(false) }
     val scrollToTopEvents = LocalReselectEvents.current
+
+    if (showKindDialog) {
+        LibraryKindDialog(
+            currentKind = uiState.filter.kind,
+            onKindSelected = {
+                onKindSelected(it)
+                showKindDialog = false
+            },
+            onDismiss = { showKindDialog = false }
+        )
+    }
 
     LaunchedEffect(searchQuery) {
         delay(300L)
@@ -141,8 +155,7 @@ fun LibraryScreen(
                 onSearchActiveChange = { searchActive = it; if (!it) { searchQuery = "" } },
                 onSearchQueryChange = { searchQuery = it },
                 onSyncClicked = onSyncClicked,
-                onDbRequestClicked = onDbRequestClicked,
-                onKindSelected = onKindSelected
+                onDbRequestClicked = onDbRequestClicked
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -154,6 +167,7 @@ fun LibraryScreen(
             if (isLoggedIn) {
                 LibraryFilterRow(
                     filterState = uiState.filter,
+                    onKindClick = { showKindDialog = true },
                     onStatusToggle = onStatusToggle
                 )
                 LibraryEntriesContent(
@@ -188,19 +202,8 @@ private fun LibraryTopBar(
     onSearchActiveChange: (Boolean) -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onSyncClicked: () -> Unit,
-    onDbRequestClicked: () -> Unit,
-    onKindSelected: (LibraryEntryKind) -> Unit
+    onDbRequestClicked: () -> Unit
 ) {
-    var showKindDialog by remember { mutableStateOf(false) }
-
-    if (showKindDialog) {
-        LibraryKindDialog(
-            currentKind = filterState.kind,
-            onKindSelected = { onKindSelected(it); showKindDialog = false },
-            onDismiss = { showKindDialog = false }
-        )
-    }
-
     TopAppBar(
         title = {
             if (searchActive) {
@@ -275,6 +278,7 @@ private fun LibrarySearchField(
 @Composable
 private fun LibraryFilterRow(
     filterState: FilterState,
+    onKindClick: () -> Unit,
     onStatusToggle: (LibraryStatus) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -288,6 +292,18 @@ private fun LibraryFilterRow(
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        val kindLabel = stringResource(
+            when (filterState.kind) {
+                LibraryEntryKind.All -> R.string.library_kind_all
+                LibraryEntryKind.Anime -> R.string.anime
+                LibraryEntryKind.Manga -> R.string.manga
+            }
+        )
+        FilterChip(
+            selected = true,
+            onClick = onKindClick,
+            label = { Text(kindLabel) }
+        )
         libraryStatusFilters.forEach { status ->
             FilterChip(
                 selected = selectedStatuses.contains(status),
@@ -660,12 +676,17 @@ private fun LibraryKindDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .selectable(
+                                selected = currentKind == kind,
+                                onClick = { onKindSelected(kind) },
+                                role = Role.RadioButton
+                            )
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         androidx.compose.material3.RadioButton(
                             selected = currentKind == kind,
-                            onClick = { onKindSelected(kind) }
+                            onClick = null
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(label)
