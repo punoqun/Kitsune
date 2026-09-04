@@ -535,6 +535,7 @@ private fun ReactionDetailDestination(
     var snackbarMessage by remember { mutableStateOf<String?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showReportDialog by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf("") }
 
     val loginRequiredMsg = stringResource(R.string.reactions_upvote_login_required)
@@ -569,6 +570,7 @@ private fun ReactionDetailDestination(
         isUpvoted = isUpvoted,
         isOwn = reaction?.authorId != null &&
             reaction?.authorId == viewModel.currentUserId(),
+        canReport = viewModel.currentUserId() != null,
         snackbarMessage = snackbarMessage,
         onSnackbarShown = { snackbarMessage = null },
         onNavigateUp = { navController.navigateUp() },
@@ -579,6 +581,7 @@ private fun ReactionDetailDestination(
             showEditDialog = true
         },
         onDelete = { showDeleteDialog = true },
+        onReport = { showReportDialog = true },
         onAuthorClick = { userId ->
             navController.navigateSafe(Routes.UserProfile(userId))
         },
@@ -640,6 +643,14 @@ private fun ReactionDetailDestination(
                     Text(stringResource(android.R.string.cancel))
                 }
             }
+        )
+    }
+
+    if (showReportDialog) {
+        ReportDialog(
+            itemId = route.reactionId,
+            target = ReportTarget.MEDIA_REACTION,
+            onDismiss = { showReportDialog = false }
         )
     }
 }

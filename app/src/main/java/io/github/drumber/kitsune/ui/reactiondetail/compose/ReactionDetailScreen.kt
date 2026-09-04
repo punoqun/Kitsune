@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Button
@@ -56,12 +57,14 @@ fun ReactionDetailScreen(
     isLoading: Boolean,
     isUpvoted: Boolean,
     isOwn: Boolean,
+    canReport: Boolean,
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
     onNavigateUp: () -> Unit,
     onUpvote: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onReport: () -> Unit,
     onAuthorClick: (String) -> Unit,
     onMediaClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -94,6 +97,13 @@ fun ReactionDetailScreen(
                             Icon(
                                 Icons.Filled.Delete,
                                 contentDescription = stringResource(R.string.action_delete)
+                            )
+                        }
+                    } else if (canReport) {
+                        IconButton(onClick = onReport) {
+                            Icon(
+                                Icons.Filled.Flag,
+                                contentDescription = stringResource(R.string.action_report)
                             )
                         }
                     }
