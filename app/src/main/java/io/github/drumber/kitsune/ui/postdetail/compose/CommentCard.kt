@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -64,6 +65,7 @@ fun CommentCard(
     onViewAllRepliesClick: ((Comment) -> Unit)? = null,
     onEditClick: ((Comment) -> Unit)? = null,
     onDeleteClick: ((Comment) -> Unit)? = null,
+    onReportClick: ((Comment) -> Unit)? = null,
     onImageClick: ((String) -> Unit)? = null,
     onAuthorClick: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -83,7 +85,8 @@ fun CommentCard(
             currentUserId = currentUserId,
             onAuthorClick = onAuthorClick,
             onEditClick = onEditClick,
-            onDeleteClick = onDeleteClick
+            onDeleteClick = onDeleteClick,
+            onReportClick = onReportClick
         )
         Spacer(Modifier.height(4.dp))
         CommentContent(comment = comment, onImageClick = onImageClick)
@@ -103,7 +106,8 @@ fun CommentCard(
                 onLikeClick = onLikeClick,
                 onViewAllRepliesClick = onViewAllRepliesClick,
                 onImageClick = onImageClick,
-                onAuthorClick = onAuthorClick
+                onAuthorClick = onAuthorClick,
+                onReportClick = onReportClick
             )
             HorizontalDivider(modifier = Modifier.padding(top = 4.dp))
         }
@@ -116,7 +120,8 @@ private fun CommentHeader(
     currentUserId: String?,
     onAuthorClick: (String) -> Unit,
     onEditClick: ((Comment) -> Unit)?,
-    onDeleteClick: ((Comment) -> Unit)?
+    onDeleteClick: ((Comment) -> Unit)?,
+    onReportClick: ((Comment) -> Unit)?
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Avatar(
@@ -155,37 +160,50 @@ private fun CommentHeader(
             }
         }
         val isOwner = currentUserId != null && comment.authorId == currentUserId
-        if (isOwner && (onEditClick != null || onDeleteClick != null)) {
+        if ((isOwner && (onEditClick != null || onDeleteClick != null)) ||
+            (!isOwner && onReportClick != null)
+        ) {
             CommentOverflowMenu(
+                isOwner = isOwner,
                 onEditClick = onEditClick?.let { cb -> { cb(comment) } },
-                onDeleteClick = onDeleteClick?.let { cb -> { cb(comment) } }
+                onDeleteClick = onDeleteClick?.let { cb -> { cb(comment) } },
+                onReportClick = onReportClick?.let { cb -> { cb(comment) } }
             )
         }
     }
 }
 
 @Composable
-private fun CommentOverflowMenu(
+fun CommentOverflowMenu(
+    isOwner: Boolean,
     onEditClick: (() -> Unit)?,
-    onDeleteClick: (() -> Unit)?
+    onDeleteClick: (() -> Unit)?,
+    onReportClick: (() -> Unit)?
 ) {
     var expanded by remember { mutableStateOf(false) }
     IconButton(onClick = { expanded = true }, modifier = Modifier.size(32.dp)) {
         Icon(Icons.Default.MoreVert, contentDescription = null, modifier = Modifier.size(18.dp))
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        if (onEditClick != null) {
+        if (isOwner && onEditClick != null) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.action_edit)) },
                 leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                 onClick = { expanded = false; onEditClick() }
             )
         }
-        if (onDeleteClick != null) {
+        if (isOwner && onDeleteClick != null) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.action_delete)) },
                 leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
                 onClick = { expanded = false; onDeleteClick() }
+            )
+        }
+        if (!isOwner && onReportClick != null) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_report)) },
+                leadingIcon = { Icon(Icons.Default.Flag, contentDescription = null) },
+                onClick = { expanded = false; onReportClick() }
             )
         }
     }
@@ -288,7 +306,8 @@ private fun CommentReplies(
     onLikeClick: (Comment) -> Unit,
     onViewAllRepliesClick: ((Comment) -> Unit)?,
     onImageClick: ((String) -> Unit)?,
-    onAuthorClick: (String) -> Unit
+    onAuthorClick: (String) -> Unit,
+    onReportClick: ((Comment) -> Unit)?
 ) {
     comment.replies.forEach { reply ->
         CommentCard(
@@ -298,6 +317,7 @@ private fun CommentReplies(
             currentUserId = currentUserId,
             isReply = true,
             onLikeClick = onLikeClick,
+            onReportClick = onReportClick,
             onImageClick = onImageClick,
             onAuthorClick = onAuthorClick
         )

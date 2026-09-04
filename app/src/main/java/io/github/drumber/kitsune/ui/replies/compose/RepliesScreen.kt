@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
@@ -55,6 +56,9 @@ import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.ui.postdetail.compose.CommentCard
 import io.github.drumber.kitsune.ui.postdetail.compose.CommentContent
+import io.github.drumber.kitsune.ui.postdetail.compose.CommentOverflowMenu
+import io.github.drumber.kitsune.ui.postdetail.compose.DeleteCommentConfirmDialog
+import io.github.drumber.kitsune.ui.replies.RepliesViewModel
 import io.github.drumber.kitsune.util.parseUtcDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,12 +69,18 @@ fun RepliesScreen(
     parentLikesCount: Int,
     replies: LazyPagingItems<Comment>,
     commentLikeOverrides: Map<String, Pair<Boolean, Int>>,
+    composerMode: RepliesViewModel.ComposerMode,
+    composerResetKey: Int,
     currentUserId: String?,
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
     onNavigateUp: () -> Unit,
     onParentLikeClick: () -> Unit,
     onReplyLikeClick: (Comment) -> Unit,
+    onEditComment: (Comment) -> Unit,
+    onDeleteComment: (Comment) -> Unit,
+    onReportComment: (Comment) -> Unit,
+    onCancelComposer: () -> Unit,
     onAuthorClick: (String) -> Unit,
     onImageClick: (String) -> Unit,
     onSubmitReply: (String) -> Unit,
@@ -78,6 +88,7 @@ fun RepliesScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    var commentToDelete by remember { mutableStateOf<Comment?>(null) }
 
     LaunchedEffect(snackbarMessage) {
         if (snackbarMessage != null) {
@@ -97,7 +108,12 @@ fun RepliesScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            ReplyInputBar(onSubmit = onSubmitReply)
+            ReplyInputBar(
+                composerMode = composerMode,
+                resetKey = composerResetKey,
+                onCancel = onCancelComposer,
+                onSubmit = onSubmitReply
+            )
         }
     ) { innerPadding ->
         RepliesContent(
@@ -109,9 +125,22 @@ fun RepliesScreen(
             currentUserId = currentUserId,
             onParentLikeClick = onParentLikeClick,
             onReplyLikeClick = onReplyLikeClick,
+            onEditComment = onEditComment,
+            onDeleteComment = { commentToDelete = it },
+            onReportComment = onReportComment,
             onAuthorClick = onAuthorClick,
             onImageClick = onImageClick,
             modifier = Modifier.fillMaxSize().padding(innerPadding)
+        )
+    }
+
+    commentToDelete?.let { comment ->
+        DeleteCommentConfirmDialog(
+            onConfirm = {
+                onDeleteComment(comment)
+                commentToDelete = null
+            },
+            onDismiss = { commentToDelete = null }
         )
     }
 }
@@ -126,6 +155,9 @@ private fun RepliesContent(
     currentUserId: String?,
     onParentLikeClick: () -> Unit,
     onReplyLikeClick: (Comment) -> Unit,
+    onEditComment: (Comment) -> Unit,
+    onDeleteComment: (Comment) -> Unit,
+    onReportComment: (Comment) -> Unit,
     onAuthorClick: (String) -> Unit,
     onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -138,7 +170,11 @@ private fun RepliesContent(
                     comment = parentComment,
                     isLiked = parentIsLiked,
                     likesCount = parentLikesCount,
+                    currentUserId = currentUserId,
                     onLikeClick = onParentLikeClick,
+                    onEditClick = onEditComment,
+                    onDeleteClick = onDeleteComment,
+                    onReportClick = onReportComment,
                     onAuthorClick = onAuthorClick,
                     onImageClick = onImageClick
                 )
@@ -161,6 +197,9 @@ private fun RepliesContent(
                     currentUserId = currentUserId,
                     isReply = true,
                     onLikeClick = onReplyLikeClick,
+                    onEditClick = onEditComment,
+                    onDeleteClick = onDeleteComment,
+                    onReportClick = onReportComment,
                     onImageClick = onImageClick,
                     onAuthorClick = onAuthorClick
                 )
@@ -202,7 +241,11 @@ private fun ParentCommentHeader(
     comment: Comment,
     isLiked: Boolean,
     likesCount: Int,
+    currentUserId: String?,
     onLikeClick: () -> Unit,
+    onEditClick: (Comment) -> Unit,
+    onDeleteClick: (Comment) -> Unit,
+    onReportClick: (Comment) -> Unit,
     onAuthorClick: (String) -> Unit,
     onImageClick: (String) -> Unit
 ) {
@@ -243,6 +286,15 @@ private fun ParentCommentHeader(
                     )
                 }
             }
+            val isOwner = currentUserId != null && comment.authorId == currentUserId
+            if (isOwner || currentUserId != null) {
+                CommentOverflowMenu(
+                    isOwner = isOwner,
+                    onEditClick = if (isOwner) ({ onEditClick(comment) }) else null,
+                    onDeleteClick = if (isOwner) ({ onDeleteClick(comment) }) else null,
+                    onReportClick = if (!isOwner) ({ onReportClick(comment) }) else null
+                )
+            }
         }
         CommentContent(
             comment = comment,
@@ -272,27 +324,57 @@ private fun ParentCommentHeader(
 }
 
 @Composable
-private fun ReplyInputBar(onSubmit: (String) -> Unit) {
+private fun ReplyInputBar(
+    composerMode: RepliesViewModel.ComposerMode,
+    resetKey: Int,
+    onCancel: () -> Unit,
+    onSubmit: (String) -> Unit
+) {
     var inputText by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(composerMode, resetKey) {
+        inputText = when (composerMode) {
+            RepliesViewModel.ComposerMode.Normal -> ""
+            is RepliesViewModel.ComposerMode.Edit -> composerMode.comment.content.orEmpty()
+        }
+    }
     Surface(shadowElevation = 4.dp) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).imePadding(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = { inputText = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(stringResource(R.string.comment_reply_hint)) },
-                maxLines = 4,
-                singleLine = false
-            )
-            Spacer(Modifier.width(4.dp))
-            IconButton(
-                onClick = { if (inputText.isNotBlank()) { onSubmit(inputText.trim()); inputText = "" } },
-                enabled = inputText.isNotBlank()
+        Column(modifier = Modifier.imePadding()) {
+            if (composerMode is RepliesViewModel.ComposerMode.Edit) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        stringResource(R.string.comment_editing),
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = onCancel) {
+                        Icon(Icons.Default.Close, stringResource(R.string.action_close))
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text(stringResource(R.string.comment_reply_hint)) },
+                    maxLines = 4,
+                    singleLine = false
+                )
+                Spacer(Modifier.width(4.dp))
+                IconButton(
+                    onClick = { onSubmit(inputText.trim()) },
+                    enabled = inputText.isNotBlank()
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Send,
+                        contentDescription = stringResource(R.string.action_send)
+                    )
+                }
             }
         }
     }

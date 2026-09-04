@@ -61,6 +61,7 @@ fun PostDetailScreen(
     comments: LazyPagingItems<Comment>,
     commentLikeOverrides: Map<String, Pair<Boolean, Int>>,
     composerMode: PostDetailViewModel.ComposerMode,
+    composerResetKey: Int,
     currentUserId: String?,
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
@@ -69,14 +70,17 @@ fun PostDetailScreen(
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit,
     onEditPost: (Post) -> Unit,
     onDeletePost: () -> Unit,
+    onReportPost: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
     onCommentLikeClick: (Comment) -> Unit,
     onReplyClick: (Comment) -> Unit,
     onViewAllRepliesClick: (Comment) -> Unit,
     onEditComment: (Comment) -> Unit,
     onDeleteComment: (Comment) -> Unit,
+    onReportComment: (Comment) -> Unit,
     onCancelComposer: () -> Unit,
     onSubmitComment: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -106,6 +110,7 @@ fun PostDetailScreen(
         bottomBar = {
             CommentInputBar(
                 composerMode = composerMode,
+                resetKey = composerResetKey,
                 onCancel = onCancelComposer,
                 onSubmit = onSubmitComment
             )
@@ -123,14 +128,17 @@ fun PostDetailScreen(
             onRevealPost = onRevealPost,
             onMediaClick = onMediaClick,
             onImageClick = onImageClick,
+            onEmbedClick = onEmbedClick,
             onEditPost = onEditPost,
             onDeletePost = { showDeletePost = true },
+            onReportPost = onReportPost,
             onAuthorClick = onAuthorClick,
             onCommentLikeClick = onCommentLikeClick,
             onReplyClick = onReplyClick,
             onViewAllRepliesClick = onViewAllRepliesClick,
             onEditComment = onEditComment,
             onDeleteComment = { commentToDelete = it },
+            onReportComment = onReportComment,
             modifier = Modifier.fillMaxSize().padding(innerPadding)
         )
     }
@@ -162,14 +170,17 @@ private fun PostDetailContent(
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit,
     onEditPost: (Post) -> Unit,
     onDeletePost: () -> Unit,
+    onReportPost: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
     onCommentLikeClick: (Comment) -> Unit,
     onReplyClick: (Comment) -> Unit,
     onViewAllRepliesClick: (Comment) -> Unit,
     onEditComment: (Comment) -> Unit,
     onDeleteComment: (Comment) -> Unit,
+    onReportComment: (Comment) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val refreshState = comments.loadState.refresh
@@ -187,8 +198,10 @@ private fun PostDetailContent(
                     onRevealPost = onRevealPost,
                     onMediaClick = onMediaClick,
                     onImageClick = onImageClick,
+                    onEmbedClick = onEmbedClick,
                     onEditPost = onEditPost,
                     onDeletePost = onDeletePost,
+                    onReportPost = onReportPost,
                     onAuthorClick = onAuthorClick
                 )
                 HorizontalDivider()
@@ -224,6 +237,7 @@ private fun PostDetailContent(
                             onViewAllRepliesClick = onViewAllRepliesClick,
                             onEditClick = onEditComment,
                             onDeleteClick = onDeleteComment,
+                            onReportClick = onReportComment,
                             onImageClick = { imageUrl -> onImageClick(listOf(imageUrl), 0) },
                             onAuthorClick = onAuthorClick
                         )
@@ -250,8 +264,10 @@ private fun PostDetailHeader(
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit,
     onEditPost: (Post) -> Unit,
     onDeletePost: () -> Unit,
+    onReportPost: (Post) -> Unit,
     onAuthorClick: (String) -> Unit
 ) {
     val likeState = io.github.drumber.kitsune.data.repository.PostInteractionStore.State(
@@ -264,13 +280,16 @@ private fun PostDetailHeader(
         isRevealed = isPostRevealed,
         nsfwAllowed = nsfwAllowed,
         currentUserId = currentUserId,
+        canReport = currentUserId != null,
         onPostClick = {},
         onLikeClick = { _, _ -> onPostLikeClick() },
         onRevealClick = { onRevealPost() },
         onMediaClick = onMediaClick,
         onImageClick = onImageClick,
+        onEmbedClick = onEmbedClick,
         onEditClick = onEditPost,
         onDeleteClick = { onDeletePost() },
+        onReportClick = onReportPost,
         onAuthorClick = onAuthorClick
     )
 }
@@ -278,12 +297,13 @@ private fun PostDetailHeader(
 @Composable
 private fun CommentInputBar(
     composerMode: PostDetailViewModel.ComposerMode,
+    resetKey: Int,
     onCancel: () -> Unit,
     onSubmit: (String) -> Unit
 ) {
     var inputText by rememberSaveable { mutableStateOf("") }
 
-    LaunchedEffect(composerMode) {
+    LaunchedEffect(composerMode, resetKey) {
         when (composerMode) {
             is PostDetailViewModel.ComposerMode.Normal -> inputText = ""
             is PostDetailViewModel.ComposerMode.Edit ->
@@ -320,7 +340,10 @@ private fun CommentInputBar(
                     onClick = { if (inputText.isNotBlank()) onSubmit(inputText.trim()) },
                     enabled = inputText.isNotBlank()
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                    Icon(
+                        Icons.AutoMirrored.Filled.Send,
+                        contentDescription = stringResource(R.string.action_send)
+                    )
                 }
             }
         }

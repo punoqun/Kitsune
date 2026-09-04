@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -90,7 +91,11 @@ fun NavGraphBuilder.socialGraph(navController: NavHostController) {
     ) { backStackEntry ->
         PostDetailDestination(backStackEntry, navController)
     }
-    composable<Routes.Replies> { backStackEntry ->
+    composable<Routes.Replies>(
+        deepLinks = listOf(
+            navDeepLink { uriPattern = "kitsune://replies/{postId}/{parentCommentId}" }
+        )
+    ) { backStackEntry ->
         RepliesDestination(backStackEntry, navController)
     }
     composable<Routes.ReactionDetail>(
@@ -275,6 +280,10 @@ private fun PostDetailDestination(
     val comments = viewModel.comments.collectAsLazyPagingItems()
     var commentLikeOverrides by remember { mutableStateOf<Map<String, Pair<Boolean, Int>>>(emptyMap()) }
     var snackbarMessage by remember { mutableStateOf<String?>(null) }
+    var composerResetKey by remember { mutableIntStateOf(0) }
+    var reportItem by remember {
+        mutableStateOf<Pair<String, ReportTarget>?>(null)
+    }
 
     val loginRequiredMsg = stringResource(R.string.comment_login_required)
     val actionFailedMsg = stringResource(R.string.comment_action_failed)
@@ -290,11 +299,13 @@ private fun PostDetailDestination(
                 PostDetailViewModel.Event.Error -> snackbarMessage = actionFailedMsg
                 PostDetailViewModel.Event.CommentPosted -> {
                     viewModel.cancelComposer()
+                    composerResetKey++
                     comments.refresh()
                     snackbarMessage = commentPostedMsg
                 }
                 PostDetailViewModel.Event.CommentUpdated -> {
                     viewModel.cancelComposer()
+                    composerResetKey++
                     comments.refresh()
                     snackbarMessage = commentUpdatedMsg
                 }
@@ -325,6 +336,7 @@ private fun PostDetailDestination(
         comments = comments,
         commentLikeOverrides = commentLikeOverrides,
         composerMode = composerMode,
+        composerResetKey = composerResetKey,
         currentUserId = viewModel.currentUserId(),
         snackbarMessage = snackbarMessage,
         onSnackbarShown = { snackbarMessage = null },
@@ -350,8 +362,10 @@ private fun PostDetailDestination(
                 )
             )
         },
+        onEmbedClick = { url -> navController.navigateSafe(Routes.WebView(url)) },
         onEditPost = { p -> navController.navigateSafe(Routes.CreatePost(editPostId = p.id)) },
         onDeletePost = { viewModel.deletePost() },
+        onReportPost = { p -> reportItem = p.id to ReportTarget.POST },
         onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) },
         onCommentLikeClick = { comment -> viewModel.toggleCommentLike(comment) },
         onReplyClick = { comment -> viewModel.startReply(comment) },
@@ -363,6 +377,9 @@ private fun PostDetailDestination(
         },
         onEditComment = { comment -> viewModel.startEditComment(comment) },
         onDeleteComment = { comment -> viewModel.deleteComment(comment.id) },
+        onReportComment = { comment ->
+            reportItem = comment.id to ReportTarget.COMMENT
+        },
         onCancelComposer = { viewModel.cancelComposer() },
         onSubmitComment = { content ->
             when (val mode = viewModel.composerMode.value) {
@@ -375,6 +392,14 @@ private fun PostDetailDestination(
             }
         }
     )
+
+    reportItem?.let { (itemId, target) ->
+        ReportDialog(
+            itemId = itemId,
+            target = target,
+            onDismiss = { reportItem = null }
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -390,10 +415,13 @@ private fun RepliesDestination(backStackEntry: NavBackStackEntry, navController:
 
     val parentComment by viewModel.parentComment.collectAsStateWithLifecycle()
     val replies = viewModel.replies.collectAsLazyPagingItems()
+    val composerMode by viewModel.composerMode.collectAsStateWithLifecycle()
     var parentIsLiked by remember { mutableStateOf(parentComment?.isLikedByMe ?: false) }
     var parentLikesCount by remember { mutableStateOf(parentComment?.likesCount ?: 0) }
     var commentLikeOverrides by remember { mutableStateOf<Map<String, Pair<Boolean, Int>>>(emptyMap()) }
     var snackbarMessage by remember { mutableStateOf<String?>(null) }
+    var composerResetKey by remember { mutableIntStateOf(0) }
+    var reportCommentId by remember { mutableStateOf<String?>(null) }
 
     val commentPostedMsg = stringResource(R.string.comment_posted)
     val loginRequiredMsg = stringResource(R.string.comment_login_required)
@@ -418,12 +446,16 @@ private fun RepliesDestination(backStackEntry: NavBackStackEntry, navController:
                             (event.commentId to Pair(event.isLiked, event.count))
                     }
                 RepliesViewModel.Event.ReplyPosted -> {
+                    viewModel.cancelComposer()
+                    composerResetKey++
                     replies.refresh()
                     snackbarMessage = commentPostedMsg
                 }
                 RepliesViewModel.Event.LoginRequired -> snackbarMessage = loginRequiredMsg
                 RepliesViewModel.Event.Error -> snackbarMessage = actionFailedMsg
                 is RepliesViewModel.Event.ReplyUpdated -> {
+                    viewModel.cancelComposer()
+                    composerResetKey++
                     if (!event.isParentComment) replies.refresh()
                 }
                 is RepliesViewModel.Event.CommentDeleted -> {
@@ -443,12 +475,18 @@ private fun RepliesDestination(backStackEntry: NavBackStackEntry, navController:
         parentLikesCount = parentLikesCount,
         replies = replies,
         commentLikeOverrides = commentLikeOverrides,
+        composerMode = composerMode,
+        composerResetKey = composerResetKey,
         currentUserId = viewModel.currentUserId(),
         snackbarMessage = snackbarMessage,
         onSnackbarShown = { snackbarMessage = null },
         onNavigateUp = { navController.navigateUp() },
         onParentLikeClick = { parentComment?.let { viewModel.toggleCommentLike(it) } },
         onReplyLikeClick = { comment -> viewModel.toggleCommentLike(comment) },
+        onEditComment = { comment -> viewModel.startEditComment(comment) },
+        onDeleteComment = { comment -> viewModel.deleteComment(comment.id) },
+        onReportComment = { comment -> reportCommentId = comment.id },
+        onCancelComposer = { viewModel.cancelComposer() },
         onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) },
         onImageClick = { imageUrl ->
             navController.navigateSafe(
@@ -459,8 +497,22 @@ private fun RepliesDestination(backStackEntry: NavBackStackEntry, navController:
                 )
             )
         },
-        onSubmitReply = { content -> viewModel.postReply(content) }
+        onSubmitReply = { content ->
+            when (val mode = viewModel.composerMode.value) {
+                RepliesViewModel.ComposerMode.Normal -> viewModel.postReply(content)
+                is RepliesViewModel.ComposerMode.Edit ->
+                    viewModel.updateComment(mode.comment.id, content)
+            }
+        }
     )
+
+    reportCommentId?.let { commentId ->
+        ReportDialog(
+            itemId = commentId,
+            target = ReportTarget.COMMENT,
+            onDismiss = { reportCommentId = null }
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------
