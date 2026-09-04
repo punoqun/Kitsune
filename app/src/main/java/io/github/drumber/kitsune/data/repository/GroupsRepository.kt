@@ -63,11 +63,19 @@ class GroupsRepository(
         pagingSourceFactory = {
             FollowedGroupsPagingDataSource(
                 groupsNetworkDataSource,
-                buildFollowedFilter(userId, query, pageSize)
+                buildFollowedFilter(userId, pageSize)
             )
         }
     ).flow.map { pagingData ->
-        pagingData.filter { it.group != null }.map { it.group!!.toGroup() }
+        pagingData
+            .filter { member ->
+                val group = member.group
+                group != null && (
+                    query.isNullOrBlank() ||
+                        group.name?.contains(query, ignoreCase = true) == true
+                    )
+            }
+            .map { it.group!!.toGroup() }
     }
 
     /** Fetches a single group by id, including its category. */
@@ -133,15 +141,11 @@ class GroupsRepository(
 
     private fun buildFollowedFilter(
         userId: String,
-        query: String?,
         pageSize: Int
     ) = Filter()
         .filter("user", userId)
         .include("group", "group.category")
         .pageLimit(pageSize)
-        .apply {
-            if (!query.isNullOrBlank()) filter("query", query)
-            else sort("-createdAt")
-        }
+        .sort("-createdAt")
 
 }

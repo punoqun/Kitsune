@@ -133,7 +133,7 @@ fun GroupDetailScreen(
             }
         },
         floatingActionButton = {
-            if (selectedTab == TAB_POSTS && membershipState.isVisible) {
+            if (selectedTab == TAB_POSTS && membershipState.isMember) {
                 FloatingActionButton(onClick = onNavigateToCreatePost) {
                     Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.title_create_post))
                 }
@@ -216,7 +216,15 @@ private fun GroupDetailTopBar(
         defaultUseDarkIcons = surfaceUsesDarkStatusBarIcons
     )
 
-    Box(modifier = Modifier.background(coverPlaceholder)) {
+    Box(
+        modifier = Modifier
+            .background(coverPlaceholder)
+            .clickable(
+                enabled = group?.coverImageUrl != null,
+                onClickLabel = stringResource(R.string.profile_cover_image_description),
+                onClick = onOpenCover
+            )
+    ) {
         AsyncImage(
             model = group?.coverImageUrl,
             contentDescription = group?.name,
@@ -224,11 +232,6 @@ private fun GroupDetailTopBar(
             modifier = Modifier
                 .matchParentSize()
                 .graphicsLayer { alpha = 1f - collapsedFraction }
-                .clickable(
-                    enabled = group?.coverImageUrl != null,
-                    onClickLabel = stringResource(R.string.profile_cover_image_description),
-                    onClick = onOpenCover
-                )
         )
         Box(
             modifier = Modifier

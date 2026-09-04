@@ -113,8 +113,7 @@ fun GroupsScreen(
             PagingColumn(
                 items = groups,
                 state = listState,
-                modifier = Modifier.fillMaxSize(),
-                key = { it.id }
+                modifier = Modifier.fillMaxSize()
             ) { group ->
                 GroupRow(group = group, onClick = { group?.let(onGroupClick) })
             }
