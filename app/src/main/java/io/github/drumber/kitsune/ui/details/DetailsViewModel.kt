@@ -186,6 +186,13 @@ class DetailsViewModel(
 
     fun upvoteReaction(reaction: MediaReaction) = reactionsDelegate.upvoteReaction(reaction)
 
+    fun refreshReactions() {
+        val media = mediaModel.value ?: return
+        viewModelScope.launch {
+            reactionsDelegate.loadReactions(media)
+        }
+    }
+
     fun createReaction(text: String) {
         val media = mediaModel.value ?: return
         val libraryEntryId = _libraryEntryWithModification.value?.libraryEntry?.id

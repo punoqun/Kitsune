@@ -98,6 +98,10 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
         val reactions by viewModel.reactions.collectAsStateWithLifecycle(emptyList())
         val mappingsState by viewModel.mappingsSate.collectAsStateWithLifecycle()
 
+        backStackEntry.NavResultEffect<Boolean>(NavResults.REACTION_CHANGED) {
+            viewModel.refreshReactions()
+        }
+
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
