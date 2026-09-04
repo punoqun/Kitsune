@@ -190,7 +190,11 @@ private fun CreatePostTopBar(
                 enabled = canPublish,
                 modifier = Modifier.padding(end = 8.dp)
             ) {
-                Text(stringResource(R.string.action_publish))
+                Text(
+                    stringResource(
+                        if (isEditMode) R.string.action_save else R.string.action_publish
+                    )
+                )
             }
         },
         scrollBehavior = scrollBehavior
@@ -328,7 +332,10 @@ private fun PostTagsSection(
             label = { Text(media.title) },
             trailingIcon = {
                 IconButton(onClick = onClearMedia, modifier = Modifier.size(18.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = null)
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(R.string.action_remove)
+                    )
                 }
             }
         )
@@ -341,7 +348,10 @@ private fun PostTagsSection(
             label = { Text(unit.title) },
             trailingIcon = {
                 IconButton(onClick = onClearUnit, modifier = Modifier.size(18.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = null)
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(R.string.action_remove)
+                    )
                 }
             }
         )
@@ -399,7 +409,7 @@ private fun PostImageThumbnail(imageUrl: String, onRemove: () -> Unit) {
         ) {
             Icon(
                 Icons.Default.Close,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.action_remove),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSurface
             )
