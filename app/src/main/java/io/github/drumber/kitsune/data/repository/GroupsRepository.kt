@@ -63,18 +63,13 @@ class GroupsRepository(
         pagingSourceFactory = {
             FollowedGroupsPagingDataSource(
                 groupsNetworkDataSource,
-                buildFollowedFilter(userId, pageSize)
+                buildFollowedFilter(userId, pageSize),
+                query
             )
         }
     ).flow.map { pagingData ->
         pagingData
-            .filter { member ->
-                val group = member.group
-                group != null && (
-                    query.isNullOrBlank() ||
-                        group.name?.contains(query, ignoreCase = true) == true
-                    )
-            }
+            .filter { it.group != null }
             .map { it.group!!.toGroup() }
     }
 

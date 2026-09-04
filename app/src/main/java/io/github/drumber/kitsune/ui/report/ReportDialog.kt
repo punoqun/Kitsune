@@ -42,13 +42,12 @@ fun ReportDialog(
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val canSubmit by viewModel.canSubmit.collectAsStateWithLifecycle(initialValue = false)
-    var submitted by remember { mutableStateOf(false) }
     var submitFailed by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.submitEvent.collect { event ->
             when (event) {
-                ReportViewModel.SubmitEvent.ReportSent -> submitted = true
+                ReportViewModel.SubmitEvent.ReportSent -> Unit
                 ReportViewModel.SubmitEvent.Error -> submitFailed = true
             }
         }
@@ -59,7 +58,8 @@ fun ReportDialog(
         title = { Text(stringResource(target.titleRes)) },
         text = {
             when {
-                submitted -> Text(stringResource(R.string.report_success))
+                uiState.state == ReportViewModel.ReportState.ReportSent ->
+                    Text(stringResource(R.string.report_success))
                 uiState.state == ReportViewModel.ReportState.Loading ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -85,7 +85,9 @@ fun ReportDialog(
             }
         },
         confirmButton = {
-            if (submitted || uiState.state == ReportViewModel.ReportState.AlreadyReported) {
+            if (uiState.state == ReportViewModel.ReportState.ReportSent ||
+                uiState.state == ReportViewModel.ReportState.AlreadyReported
+            ) {
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.action_close))
                 }
@@ -99,7 +101,7 @@ fun ReportDialog(
             }
         },
         dismissButton = {
-            if (!submitted) {
+            if (uiState.state != ReportViewModel.ReportState.ReportSent) {
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(android.R.string.cancel))
                 }

@@ -40,9 +40,7 @@ class ReportViewModel(
 
     fun setExplanation(explanation: String?) {
         _uiState.update {
-            it.copy(
-                explanation = explanation?.trim()
-                    ?.takeIf { explanation -> explanation.isNotBlank() })
+            it.copy(explanation = explanation)
         }
     }
 
@@ -50,13 +48,14 @@ class ReportViewModel(
         val state = uiState.value
         if (!state.canSubmit()) return
         val reason = state.selectedReason ?: return
-        val explanation = state.explanation
+        val explanation = state.explanation?.trim()?.takeIf { it.isNotBlank() }
 
         viewModelScope.launch {
             _uiState.update { it.copy(state = ReportState.Loading) }
             try {
                 val success = reportRepository.submitReport(itemId, type, reason, explanation)
                 if (success) {
+                    _uiState.update { it.copy(state = ReportState.ReportSent) }
                     _submitEvent.emit(SubmitEvent.ReportSent)
                 } else {
                     _uiState.update { it.copy(state = ReportState.NotReported) }
@@ -102,6 +101,7 @@ class ReportViewModel(
         object Loading : ReportState
         object NotReported : ReportState
         object AlreadyReported : ReportState
+        object ReportSent : ReportState
     }
 
     sealed interface SubmitEvent {

@@ -161,7 +161,7 @@ private fun CommentHeader(
         }
         val isOwner = currentUserId != null && comment.authorId == currentUserId
         if ((isOwner && (onEditClick != null || onDeleteClick != null)) ||
-            (!isOwner && onReportClick != null)
+            (!isOwner && currentUserId != null && onReportClick != null)
         ) {
             CommentOverflowMenu(
                 isOwner = isOwner,
