@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -25,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -36,6 +38,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
+import io.github.drumber.kitsune.ui.component.compose.NavigationBarIconAppearance
+import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -91,7 +95,8 @@ private fun NavDestination?.hidesNavigationBar(): Boolean {
     if (this == null) return false
     return hierarchyHasRoute(Routes.SettingsGraph::class) ||
         hierarchyHasRoute(Routes.WebView::class) ||
-        hierarchyHasRoute(Routes.PhotoView::class)
+        hierarchyHasRoute(Routes.PhotoView::class) ||
+        hierarchyHasRoute(Routes.Login::class)
 }
 
 private fun NavDestination.hierarchyHasRoute(routeClass: KClass<*>): Boolean =
@@ -110,6 +115,17 @@ fun KitsuneApp(
     doubleBackToExit: Boolean = false,
     onExitRequested: () -> Unit = {}
 ) {
+    val defaultUseDarkSystemBarIcons =
+        MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    StatusBarIconAppearance(
+        useDarkIcons = defaultUseDarkSystemBarIcons,
+        defaultUseDarkIcons = defaultUseDarkSystemBarIcons
+    )
+    NavigationBarIconAppearance(
+        useDarkIcons = defaultUseDarkSystemBarIcons,
+        defaultUseDarkIcons = defaultUseDarkSystemBarIcons
+    )
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val showNavigation = !currentDestination.hidesNavigationBar()

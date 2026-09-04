@@ -159,7 +159,13 @@ fun LoginScreen(
                                     if (passwordVisible) Icons.Filled.VisibilityOff
                                     else Icons.Filled.Visibility
                                 ),
-                                contentDescription = null
+                                contentDescription = stringResource(
+                                    if (passwordVisible) {
+                                        R.string.action_hide_password
+                                    } else {
+                                        R.string.action_show_password
+                                    }
+                                )
                             )
                         }
                     },

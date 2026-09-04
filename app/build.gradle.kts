@@ -125,7 +125,7 @@ aboutLibraries {
     // AboutLibraries 11 cannot register Android resource tasks through AGP 9's removed legacy API.
     registerAndroidTasks = false
     configPath = "app/config"
-    offlineMode = true
+    offlineMode = false
     // Remove the "generated" timestamp to allow for reproducible builds
     excludeFields = arrayOf("generated")
 }
