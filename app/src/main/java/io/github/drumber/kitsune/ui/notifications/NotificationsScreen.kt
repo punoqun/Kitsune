@@ -2,12 +2,15 @@ package io.github.drumber.kitsune.ui.notifications
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -27,6 +30,7 @@ import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
 import io.github.drumber.kitsune.ui.component.compose.list.PagingColumn
 import io.github.drumber.kitsune.ui.component.compose.list.PagingEmptyContent
 import io.github.drumber.kitsune.ui.theme.KitsuneTheme
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,9 +40,25 @@ fun NotificationsScreen(
     notifications: LazyPagingItems<Notification>,
     loginRequired: Boolean,
     onNavigateUp: () -> Unit,
-    onNotificationClick: (Notification) -> Unit
+    onNotificationClick: (Notification) -> Unit,
+    onNotificationsVisible: (List<Notification>) -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState, notifications.itemCount) {
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo.mapNotNull { itemInfo ->
+                notifications.itemSnapshotList.items.getOrNull(itemInfo.index)
+            }
+        }.distinctUntilChanged()
+            .collect { visibleNotifications ->
+                val unseenNotifications = visibleNotifications.filterNot { it.isSeen }
+                if (unseenNotifications.isNotEmpty()) {
+                    onNotificationsVisible(unseenNotifications)
+                }
+            }
+    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -65,6 +85,7 @@ fun NotificationsScreen(
             ) {
                 PagingColumn(
                     items = notifications,
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     key = { it.id },
                     emptyContent = {
@@ -110,7 +131,8 @@ private fun NotificationsLoginRequiredPreview() {
             notifications = emptyItems,
             loginRequired = true,
             onNavigateUp = {},
-            onNotificationClick = {}
+            onNotificationClick = {},
+            onNotificationsVisible = {}
         )
     }
 }
@@ -125,7 +147,8 @@ private fun NotificationsEmptyPreview() {
             notifications = emptyItems,
             loginRequired = false,
             onNavigateUp = {},
-            onNotificationClick = {}
+            onNotificationClick = {},
+            onNotificationsVisible = {}
         )
     }
 }
@@ -171,7 +194,8 @@ private fun NotificationsWithItemsPreview() {
             notifications = sampleItems,
             loginRequired = false,
             onNavigateUp = {},
-            onNotificationClick = {}
+            onNotificationClick = {},
+            onNotificationsVisible = {}
         )
     }
 }

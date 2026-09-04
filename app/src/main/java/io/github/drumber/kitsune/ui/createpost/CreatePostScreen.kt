@@ -37,7 +37,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -82,6 +84,7 @@ fun CreatePostScreen(
     val publishedMsg = stringResource(R.string.post_published)
     val updatedMsg = stringResource(R.string.post_updated)
     val errorMsg = stringResource(R.string.comment_action_failed)
+    val isEditMode by rememberUpdatedState(uiState.isEditMode)
 
     LaunchedEffect(Unit) {
         events.collect { event ->
@@ -90,7 +93,7 @@ fun CreatePostScreen(
                     snackbarHostState.showSnackbar(loginRequiredMsg)
 
                 CreatePostViewModel.Event.Published -> {
-                    val msg = if (uiState.isEditMode) updatedMsg else publishedMsg
+                    val msg = if (isEditMode) updatedMsg else publishedMsg
                     snackbarHostState.showSnackbar(msg)
                     onPublished()
                 }
@@ -130,7 +133,7 @@ fun CreatePostScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (uiState.isPublishing) {
+            if (uiState.isPublishing || uiState.isEditLoading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
             CreatePostContent(
@@ -215,6 +218,7 @@ private fun CreatePostContent(
     onRemoveImage: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val editingEnabled = !uiState.isEditLoading && !uiState.editLoadFailed
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -223,6 +227,7 @@ private fun CreatePostContent(
         PostTextInput(
             content = uiState.content,
             onContentChange = onContentChange,
+            enabled = editingEnabled,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
@@ -232,7 +237,8 @@ private fun CreatePostContent(
             spoiler = uiState.spoiler,
             nsfw = uiState.nsfw,
             onSpoilerToggle = onSpoilerToggle,
-            onNsfwToggle = onNsfwToggle
+            onNsfwToggle = onNsfwToggle,
+            enabled = editingEnabled
         )
         Spacer(Modifier.height(12.dp))
         SectionLabel(stringResource(R.string.label_add_tags))
@@ -243,14 +249,17 @@ private fun CreatePostContent(
             onTagMediaClick = onTagMediaClick,
             onTagUnitClick = onTagUnitClick,
             onClearMedia = onClearMedia,
-            onClearUnit = onClearUnit
+            onClearUnit = onClearUnit,
+            enabled = editingEnabled
         )
         Spacer(Modifier.height(8.dp))
         PostImageSection(
             images = uiState.images,
-            canAddMore = uiState.images.size < CreatePostViewModel.MAX_IMAGES,
+            canAddMore = editingEnabled &&
+                uiState.images.size < CreatePostViewModel.MAX_IMAGES,
             onAddImageClick = onAddImageClick,
-            onRemoveImage = onRemoveImage
+            onRemoveImage = onRemoveImage,
+            enabled = editingEnabled
         )
         if (uiState.content.isNotBlank()) {
             Spacer(Modifier.height(12.dp))
@@ -282,11 +291,13 @@ private const val MAX_POST_LENGTH = 9000
 private fun PostTextInput(
     content: String,
     onContentChange: (String) -> Unit,
+    enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
         value = content,
         onValueChange = { if (it.length <= MAX_POST_LENGTH) onContentChange(it) },
+        enabled = enabled,
         modifier = modifier.height(140.dp),
         placeholder = { Text(stringResource(R.string.hint_post_content)) },
         supportingText = {
@@ -307,7 +318,8 @@ private fun PostTagsSection(
     onTagMediaClick: () -> Unit,
     onTagUnitClick: () -> Unit,
     onClearMedia: () -> Unit,
-    onClearUnit: () -> Unit
+    onClearUnit: () -> Unit,
+    enabled: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -316,11 +328,12 @@ private fun PostTagsSection(
     ) {
         AssistChip(
             onClick = onTagMediaClick,
+            enabled = enabled,
             label = { Text(stringResource(R.string.action_tag_media)) }
         )
         AssistChip(
             onClick = onTagUnitClick,
-            enabled = media != null,
+            enabled = enabled && media != null,
             label = { Text(stringResource(R.string.action_tag_unit)) }
         )
     }
@@ -328,10 +341,15 @@ private fun PostTagsSection(
         Spacer(Modifier.height(4.dp))
         InputChip(
             selected = true,
+            enabled = enabled,
             onClick = {},
             label = { Text(media.title) },
             trailingIcon = {
-                IconButton(onClick = onClearMedia, modifier = Modifier.size(18.dp)) {
+                IconButton(
+                    onClick = onClearMedia,
+                    enabled = enabled,
+                    modifier = Modifier.size(18.dp)
+                ) {
                     Icon(
                         Icons.Default.Close,
                         contentDescription = stringResource(R.string.action_remove)
@@ -344,10 +362,15 @@ private fun PostTagsSection(
         Spacer(Modifier.height(4.dp))
         InputChip(
             selected = true,
+            enabled = enabled,
             onClick = {},
             label = { Text(unit.title) },
             trailingIcon = {
-                IconButton(onClick = onClearUnit, modifier = Modifier.size(18.dp)) {
+                IconButton(
+                    onClick = onClearUnit,
+                    enabled = enabled,
+                    modifier = Modifier.size(18.dp)
+                ) {
                     Icon(
                         Icons.Default.Close,
                         contentDescription = stringResource(R.string.action_remove)
@@ -363,7 +386,8 @@ private fun PostImageSection(
     images: List<CreatePostViewModel.SelectedImage>,
     canAddMore: Boolean,
     onAddImageClick: () -> Unit,
-    onRemoveImage: (Int) -> Unit
+    onRemoveImage: (Int) -> Unit,
+    enabled: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -371,7 +395,7 @@ private fun PostImageSection(
     ) {
         AssistChip(
             onClick = onAddImageClick,
-            enabled = canAddMore,
+            enabled = enabled && canAddMore,
             label = { Text(stringResource(R.string.action_add_image)) },
             leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
         )
@@ -385,7 +409,8 @@ private fun PostImageSection(
             itemsIndexed(images) { index, image ->
                 PostImageThumbnail(
                     imageUrl = image.uri,
-                    onRemove = { onRemoveImage(index) }
+                    onRemove = { onRemoveImage(index) },
+                    enabled = enabled
                 )
             }
         }
@@ -393,7 +418,11 @@ private fun PostImageSection(
 }
 
 @Composable
-private fun PostImageThumbnail(imageUrl: String, onRemove: () -> Unit) {
+private fun PostImageThumbnail(
+    imageUrl: String,
+    onRemove: () -> Unit,
+    enabled: Boolean
+) {
     Box {
         AsyncImage(
             model = imageUrl,
@@ -403,6 +432,7 @@ private fun PostImageThumbnail(imageUrl: String, onRemove: () -> Unit) {
         )
         IconButton(
             onClick = onRemove,
+            enabled = enabled,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .size(24.dp)
@@ -422,17 +452,20 @@ private fun PostTogglesRow(
     spoiler: Boolean,
     nsfw: Boolean,
     onSpoilerToggle: (Boolean) -> Unit,
-    onNsfwToggle: (Boolean) -> Unit
+    onNsfwToggle: (Boolean) -> Unit,
+    enabled: Boolean
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterChip(
             selected = spoiler,
             onClick = { onSpoilerToggle(!spoiler) },
+            enabled = enabled,
             label = { Text(stringResource(R.string.label_spoiler)) }
         )
         FilterChip(
             selected = nsfw,
             onClick = { onNsfwToggle(!nsfw) },
+            enabled = enabled,
             label = { Text(stringResource(R.string.label_nsfw)) }
         )
     }

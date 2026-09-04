@@ -43,7 +43,13 @@ class NotificationsViewModel(
     }
 
     fun markNotificationsAsSeen(notifications: List<Notification>) {
-        pendingSeenNotifications.addAll(notifications)
+        notifications
+            .filter { !it.isSeen && it.id !in seenNotificationIds }
+            .forEach { notification ->
+                if (pendingSeenNotifications.none { it.id == notification.id }) {
+                    pendingSeenNotifications.add(notification)
+                }
+            }
         if (markAsSeenJob?.isCompleted ?: true) {
             markAsSeenJob = viewModelScope.launch { flushSeenNotifications() }
         }
@@ -75,7 +81,8 @@ class NotificationsViewModel(
         try {
             notificationRepository.markAsSeen(userId, notifications)
             seenNotificationIds.addAll(notifications.map { it.id })
-            pendingSeenNotifications.removeAll(notifications.toSet())
+            val seenIds = notifications.mapTo(mutableSetOf()) { it.id }
+            pendingSeenNotifications.removeAll { it.id in seenIds }
         } catch (e: Exception) {
             logE("Failed to mark notifications as seen.", e)
         }

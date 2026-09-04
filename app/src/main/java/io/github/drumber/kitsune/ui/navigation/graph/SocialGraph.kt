@@ -24,6 +24,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
@@ -50,6 +52,7 @@ import io.github.drumber.kitsune.ui.createpost.MediaPickerViewModel
 import io.github.drumber.kitsune.ui.createpost.UnitPickerScreen
 import io.github.drumber.kitsune.ui.createpost.UnitPickerViewModel
 import io.github.drumber.kitsune.ui.feed.FeedListViewModel
+import io.github.drumber.kitsune.ui.feed.FeedViewModel
 import io.github.drumber.kitsune.ui.feed.FeedType
 import io.github.drumber.kitsune.ui.feed.compose.FeedListScreen
 import io.github.drumber.kitsune.ui.feed.compose.FeedScreen
@@ -125,12 +128,26 @@ fun NavGraphBuilder.socialGraph(navController: NavHostController) {
 
 @Composable
 private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: NavHostController) {
+    val feedVm: FeedViewModel = koinViewModel()
     val globalVm: FeedListViewModel = koinViewModel(key = "feed_global")
     val followingVm: FeedListViewModel = koinViewModel(key = "feed_following")
+    val unseenNotificationsCount by feedVm.unseenNotificationsCount.collectAsStateWithLifecycle(
+        initialValue = null
+    )
 
     LaunchedEffect(Unit) {
         globalVm.setFeedType(FeedType.GLOBAL)
         followingVm.setFeedType(FeedType.FOLLOWING)
+    }
+
+    DisposableEffect(backStackEntry) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                feedVm.updateUnseenNotificationsCount()
+            }
+        }
+        backStackEntry.lifecycle.addObserver(observer)
+        onDispose { backStackEntry.lifecycle.removeObserver(observer) }
     }
 
     val globalPosts = globalVm.dataSource.collectAsLazyPagingItems()
@@ -198,6 +215,7 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
         interactionStates = interactionStates,
         revealedPosts = revealedPosts,
         loginRequired = loginRequired,
+        unseenNotificationsCount = unseenNotificationsCount,
         nsfwAllowed = globalVm.nsfwAllowed,
         currentUserId = globalVm.currentUserId(),
         globalSnackbarMessage = globalSnackbar,
@@ -1041,13 +1059,24 @@ private fun NotificationsDestination(navController: NavHostController) {
         notifications = notifications,
         loginRequired = viewModel.loginRequired,
         onNavigateUp = { navController.navigateUp() },
+        onNotificationsVisible = viewModel::markNotificationsAsSeen,
         onNotificationClick = { notification ->
+            if (!notification.isRead) {
+                viewModel.markNotificationAsRead(notification)
+            }
             val reactionId = notification.targetReactionId
             if (reactionId != null) {
                 navController.navigateSafe(Routes.ReactionDetail(reactionId))
             } else {
-                notification.targetPost?.let { post ->
+                val post = notification.targetPost
+                if (post != null) {
                     navController.navigateSafe(Routes.PostDetail(post.id))
+                } else {
+                    notification.actorId?.let { actorId ->
+                        navController.navigateSafe(
+                            Routes.UserProfile(actorId, notification.actorName)
+                        )
+                    }
                 }
             }
         }

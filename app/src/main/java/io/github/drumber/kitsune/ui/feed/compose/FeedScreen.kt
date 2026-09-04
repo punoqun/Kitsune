@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -25,6 +27,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -32,7 +35,9 @@ import androidx.paging.compose.LazyPagingItems
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.feed.Post
 import io.github.drumber.kitsune.data.repository.PostInteractionStore
+import io.github.drumber.kitsune.preference.KitsunePref
 import io.github.drumber.kitsune.ui.navigation.LocalReselectEvents
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,9 +70,14 @@ fun FeedScreen(
     onRefresh: (Int) -> Unit,
     globalListState: LazyListState = rememberLazyListState(),
     followingListState: LazyListState = rememberLazyListState(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    unseenNotificationsCount: Int? = null
 ) {
-    val pagerState = rememberPagerState(pageCount = { FEED_PAGE_COUNT })
+    val initialPage = KitsunePref.selectedFeedTab.coerceIn(0, FEED_PAGE_COUNT - 1)
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { FEED_PAGE_COUNT }
+    )
     val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scrollToTopEvents = LocalReselectEvents.current
@@ -75,6 +85,12 @@ fun FeedScreen(
         stringResource(R.string.feed_tab_global),
         stringResource(R.string.feed_tab_following)
     )
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .collect { page -> KitsunePref.selectedFeedTab = page }
+    }
 
     LaunchedEffect(Unit) {
         scrollToTopEvents.collect {
@@ -94,6 +110,7 @@ fun FeedScreen(
                 FeedTopBar(
                     onNavigateToGroups = onNavigateToGroups,
                     onNavigateToNotifications = onNavigateToNotifications,
+                    unseenNotificationsCount = unseenNotificationsCount,
                     scrollBehavior = scrollBehavior
                 )
                 TabRow(selectedTabIndex = pagerState.currentPage) {
@@ -158,19 +175,29 @@ fun FeedScreen(
 private fun FeedTopBar(
     onNavigateToGroups: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    unseenNotificationsCount: Int?,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
+    val notificationCount = unseenNotificationsCount ?: 0
     TopAppBar(
         title = { Text(stringResource(R.string.nav_feed)) },
         actions = {
             IconButton(onClick = onNavigateToGroups) {
                 Icon(Icons.Default.Group, contentDescription = stringResource(R.string.action_groups))
             }
-            IconButton(onClick = onNavigateToNotifications) {
-                Icon(
-                    Icons.Default.Notifications,
-                    contentDescription = stringResource(R.string.action_notifications)
-                )
+            BadgedBox(
+                badge = {
+                    if (notificationCount > 0) {
+                        Badge { Text(notificationCount.toString()) }
+                    }
+                }
+            ) {
+                IconButton(onClick = onNavigateToNotifications) {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = stringResource(R.string.action_notifications)
+                    )
+                }
             }
         },
         scrollBehavior = scrollBehavior

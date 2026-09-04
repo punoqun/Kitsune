@@ -36,6 +36,8 @@ class CreatePostViewModel(
         val nsfw: Boolean = false,
         val isPublishing: Boolean = false,
         val isEditMode: Boolean = false,
+        val isEditLoading: Boolean = false,
+        val editLoadFailed: Boolean = false,
         val isPreview: Boolean = false,
         val media: SelectedMedia? = null,
         val unit: SelectedUnit? = null,
@@ -46,7 +48,10 @@ class CreatePostViewModel(
         val groupTargetName: String? = null
     ) {
         val canPublish: Boolean
-            get() = !isPublishing && (content.isNotBlank() || images.isNotEmpty())
+            get() = !isPublishing &&
+                !isEditLoading &&
+                !editLoadFailed &&
+                (content.isNotBlank() || images.isNotEmpty())
     }
 
     data class SelectedMedia(
@@ -92,11 +97,31 @@ class CreatePostViewModel(
      */
     fun initFromPostId(postId: String) {
         if (editPostId != null) return
+        editPostId = postId
+        _uiState.update {
+            it.copy(
+                isEditMode = true,
+                isEditLoading = true,
+                editLoadFailed = false
+            )
+        }
         viewModelScope.launch {
             try {
-                postManagementRepository.getPost(postId)?.let { initFromPost(it) }
+                val post = postManagementRepository.getPost(postId)
+                    ?: throw IllegalStateException("Post was not found.")
+                applyLoadedPost(post)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logE("Failed to load post '$postId' for editing.", e)
+                _uiState.update {
+                    it.copy(
+                        isEditMode = true,
+                        isEditLoading = false,
+                        editLoadFailed = true
+                    )
+                }
+                eventChannel.send(Event.Error)
             }
         }
     }
@@ -105,6 +130,10 @@ class CreatePostViewModel(
     fun initFromPost(post: Post) {
         if (editPostId != null) return
         editPostId = post.id
+        applyLoadedPost(post)
+    }
+
+    private fun applyLoadedPost(post: Post) {
         _uiState.value = UiState(
             content = post.content ?: "",
             spoiler = post.spoiler,
@@ -216,7 +245,7 @@ class CreatePostViewModel(
 
     fun publish() {
         val state = _uiState.value
-        if (state.isPublishing) return
+        if (state.isPublishing || state.isEditLoading || state.editLoadFailed) return
 
         val content = state.content.trim()
         if (content.isEmpty() && state.images.isEmpty()) return

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -55,7 +56,8 @@ fun ReactionsScreen(
     onAuthorClick: (String) -> Unit,
     onUpvoteClick: (MediaReaction) -> Unit,
     onEditClick: (MediaReaction) -> Unit,
-    onDeleteClick: (MediaReaction) -> Unit
+    onDeleteClick: (MediaReaction) -> Unit,
+    onReportClick: (MediaReaction) -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -95,11 +97,14 @@ fun ReactionsScreen(
                     ReactionItem(
                         reaction = item,
                         isOwn = item.authorId != null && item.authorId == currentUserId,
+                        canReport = currentUserId != null &&
+                            item.authorId != currentUserId,
                         onClick = { onReactionClick(item) },
                         onAuthorClick = { item.authorId?.let(onAuthorClick) },
                         onUpvoteClick = { onUpvoteClick(item) },
                         onEditClick = { onEditClick(item) },
-                        onDeleteClick = { onDeleteClick(item) }
+                        onDeleteClick = { onDeleteClick(item) },
+                        onReportClick = { onReportClick(item) }
                     )
                 }
             }
@@ -111,11 +116,13 @@ fun ReactionsScreen(
 private fun ReactionItem(
     reaction: MediaReaction,
     isOwn: Boolean,
+    canReport: Boolean,
     onClick: () -> Unit,
     onAuthorClick: () -> Unit,
     onUpvoteClick: () -> Unit,
     onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onReportClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -178,6 +185,14 @@ private fun ReactionItem(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(R.string.action_delete)
+                    )
+                }
+            } else if (canReport) {
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = onReportClick) {
+                    Icon(
+                        imageVector = Icons.Default.Flag,
+                        contentDescription = stringResource(R.string.action_report)
                     )
                 }
             }

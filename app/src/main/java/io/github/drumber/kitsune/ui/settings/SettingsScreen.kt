@@ -470,6 +470,7 @@ private fun computeCountryOptions(): List<Pair<String, String>> =
 private fun StartPagePref.toNameResId(): Int = when (this) {
     StartPagePref.Home -> R.string.preference_start_fragment_home
     StartPagePref.Search -> R.string.preference_start_fragment_search
+    StartPagePref.Feed -> R.string.nav_feed
     StartPagePref.Library -> R.string.preference_start_fragment_library
     StartPagePref.Profile -> R.string.preference_start_fragment_profile
 }

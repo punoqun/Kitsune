@@ -35,6 +35,7 @@ import io.github.drumber.kitsune.data.presentation.model.media.Anime
 import io.github.drumber.kitsune.data.presentation.model.media.MediaSelector
 import io.github.drumber.kitsune.data.presentation.model.media.unit.MediaUnit
 import io.github.drumber.kitsune.data.presentation.model.reaction.MediaReaction
+import io.github.drumber.kitsune.data.presentation.model.report.ReportTarget
 import io.github.drumber.kitsune.domain.library.LibraryEntryUpdateFailureReason
 import io.github.drumber.kitsune.domain.library.LibraryEntryUpdateResult
 import io.github.drumber.kitsune.ui.compose.collectAsStateWithLifecycle
@@ -58,6 +59,7 @@ import io.github.drumber.kitsune.ui.navigation.NavResultEffect
 import io.github.drumber.kitsune.ui.navigation.NavResults
 import io.github.drumber.kitsune.ui.navigation.navigateSafe
 import io.github.drumber.kitsune.ui.navigation.toMediaListRoute
+import io.github.drumber.kitsune.ui.report.ReportDialog
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavGraphBuilder
@@ -442,7 +444,7 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
             items = items,
             onNavigateUp = { navController.navigateUp() },
             onPostClick = { post ->
-                navController.navigateSafe(Routes.WebView("${Kitsu.BASE_URL}/posts/${post.id}"))
+                navController.navigateSafe(Routes.PostDetail(post.id))
             },
             onAuthorClick = { userId ->
                 navController.navigateSafe(Routes.UserProfile(userId))
@@ -462,6 +464,7 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
         var showAddDialog by remember { mutableStateOf(false) }
         var editingReaction by remember { mutableStateOf<MediaReaction?>(null) }
         var deletingReaction by remember { mutableStateOf<MediaReaction?>(null) }
+        var reportReactionId by remember { mutableStateOf<String?>(null) }
         var editDialogText by remember { mutableStateOf("") }
 
         LaunchedEffect(editingReaction) {
@@ -537,8 +540,17 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
             },
             onUpvoteClick = { viewModel.upvote(it) },
             onEditClick = { reaction -> editingReaction = reaction },
-            onDeleteClick = { reaction -> deletingReaction = reaction }
+            onDeleteClick = { reaction -> deletingReaction = reaction },
+            onReportClick = { reaction -> reportReactionId = reaction.id }
         )
+
+        reportReactionId?.let { reactionId ->
+            ReportDialog(
+                itemId = reactionId,
+                target = ReportTarget.MEDIA_REACTION,
+                onDismiss = { reportReactionId = null }
+            )
+        }
 
         // Add reaction dialog
         if (showAddDialog) {

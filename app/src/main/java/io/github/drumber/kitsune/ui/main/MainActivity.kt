@@ -175,6 +175,7 @@ class MainActivity : BaseActivity() {
         return when (KitsunePref.startFragment) {
             StartPagePref.Home -> null
             StartPagePref.Search -> Routes.Search()
+            StartPagePref.Feed -> Routes.Feed
             StartPagePref.Library -> Routes.Library
             StartPagePref.Profile -> Routes.MyProfile
         }
@@ -192,6 +193,8 @@ class MainActivity : BaseActivity() {
         handledIntentHashCode = intent.filterHashCode()
 
         return when (intent.action) {
+            Intent.ACTION_VIEW -> controller.handleDeepLink(intent)
+
             OPEN_MEDIA -> {
                 val mediaId = intent.getStringExtra(EXTRA_MEDIA_ID)
                 if (mediaId.isNullOrBlank()) {

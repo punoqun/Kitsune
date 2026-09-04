@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.util.Base64
 import android.webkit.URLUtil
 import android.webkit.WebView
@@ -45,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -156,7 +158,7 @@ fun NavGraphBuilder.profileGraph(navController: NavHostController) {
 
     composable<Routes.WebView> { entry ->
         val route = entry.toRoute<Routes.WebView>()
-        WebViewDestination(navController, route.url)
+        WebViewDestination(entry, navController, route.url)
     }
 
     navigation<Routes.SettingsGraph>(startDestination = Routes.Settings) {
@@ -748,18 +750,47 @@ private fun EditProfileDestination(navController: NavHostController) {
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun WebViewDestination(navController: NavHostController, url: String) {
+private fun WebViewDestination(
+    backStackEntry: NavBackStackEntry,
+    navController: NavHostController,
+    url: String
+) {
     val context = LocalContext.current
     val accessTokenRepository: AccessTokenRepository =
         koinInject()
+    val savedStateRegistry = backStackEntry.savedStateRegistry
+    val savedStateHandle = backStackEntry.savedStateHandle
+    val restoredWebViewState = remember(backStackEntry) {
+        (
+            savedStateRegistry.consumeRestoredStateForKey(WEB_VIEW_SAVED_STATE_KEY)
+            ?: savedStateHandle.get<Bundle>(WEB_VIEW_STATE_HANDLE_KEY)
+        )?.also { state ->
+            savedStateHandle[WEB_VIEW_STATE_HANDLE_KEY] = state
+        }
+    }
 
     // The WebView reference is retained so BackHandler can call goBack().
-    var webView by remember { mutableStateOf<WebView?>(null) }
+    val webViewHolder = remember { mutableStateOf<WebView?>(null) }
+
+    DisposableEffect(savedStateRegistry, savedStateHandle, webViewHolder) {
+        savedStateRegistry.registerSavedStateProvider(WEB_VIEW_SAVED_STATE_KEY) {
+            Bundle().also { state ->
+                webViewHolder.value?.saveState(state)
+            }
+        }
+        onDispose {
+            webViewHolder.value?.let { webView ->
+                Bundle().also { state -> webView.saveState(state) }
+                    .also { state -> savedStateHandle[WEB_VIEW_STATE_HANDLE_KEY] = state }
+            }
+            savedStateRegistry.unregisterSavedStateProvider(WEB_VIEW_SAVED_STATE_KEY)
+        }
+    }
 
     // `canGoBack()` is not observable by Compose, so the handler stays enabled and decides at
     // press time whether to walk the page history or leave the destination.
     BackHandler {
-        val wv = webView
+        val wv = webViewHolder.value
         if (wv != null && wv.canGoBack()) {
             wv.goBack()
         } else {
@@ -769,11 +800,10 @@ private fun WebViewDestination(navController: NavHostController, url: String) {
 
     WebViewScreen(
         initialUrl = url,
-        // savedInstanceState is not available in Compose nav; the WebView reloads the URL.
-        savedInstanceState = null,
+        savedInstanceState = restoredWebViewState,
         getAccessToken = accessTokenRepository::getAccessToken,
         onNavigateUp = { navController.navigateUp() },
-        onWebViewReady = { wv -> webView = wv },
+        onWebViewReady = { wv -> webViewHolder.value = wv },
         openUrl = { u ->
             try {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u)))
@@ -784,6 +814,9 @@ private fun WebViewDestination(navController: NavHostController, url: String) {
         copyToClipboard = { label, text -> context.copyToClipboard(label, text) }
     )
 }
+
+private const val WEB_VIEW_SAVED_STATE_KEY = "kitsune_web_view_state"
+private const val WEB_VIEW_STATE_HANDLE_KEY = "kitsune_web_view_state_handle"
 
 // ---------------------------------------------------------------------------
 // Settings
