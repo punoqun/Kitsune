@@ -28,6 +28,7 @@ import io.github.drumber.kitsune.data.repository.PostManagementRepository
 import io.github.drumber.kitsune.data.repository.UploadRepository
 import io.github.drumber.kitsune.data.repository.PostInteractionStore
 import io.github.drumber.kitsune.data.repository.ProfileLinkRepository
+import io.github.drumber.kitsune.data.repository.ReportRepository
 import io.github.drumber.kitsune.data.repository.UserRepository
 import io.github.drumber.kitsune.data.repository.WidgetLibraryChangeListener
 import io.github.drumber.kitsune.data.source.local.auth.AccessTokenLocalDataSource
@@ -80,6 +81,9 @@ import io.github.drumber.kitsune.data.source.network.reaction.ReactionNetworkDat
 import io.github.drumber.kitsune.data.source.network.reaction.api.MediaReactionApi
 import io.github.drumber.kitsune.data.source.network.reaction.model.NetworkMediaReaction
 import io.github.drumber.kitsune.data.source.network.reaction.model.NetworkMediaReactionVote
+import io.github.drumber.kitsune.data.source.network.report.ReportNetworkDataSource
+import io.github.drumber.kitsune.data.source.network.report.api.ReportApi
+import io.github.drumber.kitsune.data.source.network.report.model.NetworkReport
 import io.github.drumber.kitsune.data.source.network.media.AnimeNetworkDataSource
 import io.github.drumber.kitsune.data.source.network.media.CastingNetworkDataSource
 import io.github.drumber.kitsune.data.source.network.media.CategoryNetworkDataSource
@@ -436,6 +440,21 @@ val dataModule = module {
     }
     single { ReactionNetworkDataSource(get()) }
     single { MediaReactionRepository(get()) }
+
+    // Reports
+    factory {
+        createService<ReportApi>(
+            get(),
+            get(),
+            NetworkReport::class.java,
+            NetworkUser::class.java,
+            NetworkPost::class.java,
+            NetworkComment::class.java,
+            NetworkMediaReaction::class.java
+        )
+    }
+    single { ReportNetworkDataSource(get()) }
+    single { ReportRepository(get(), get()) }
 
     // Groups
     factory {

@@ -60,8 +60,10 @@ fun FeedListScreen(
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit = {},
     onEditClick: (Post) -> Unit,
     onDeleteClick: (Post) -> Unit,
+    onReportClick: (Post) -> Unit = {},
     onAuthorClick: (String) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
@@ -103,8 +105,10 @@ fun FeedListScreen(
                     onRevealClick = onRevealClick,
                     onMediaClick = onMediaClick,
                     onImageClick = onImageClick,
+                    onEmbedClick = onEmbedClick,
                     onEditClick = onEditClick,
                     onDeleteRequest = { postToDelete = it },
+                    onReportClick = onReportClick,
                     onAuthorClick = onAuthorClick
                 )
             }
@@ -145,8 +149,10 @@ private fun FeedPostColumn(
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteRequest: (Post) -> Unit,
+    onReportClick: (Post) -> Unit,
     onAuthorClick: (String) -> Unit
 ) {
     val refreshState = posts.loadState.refresh
@@ -174,13 +180,16 @@ private fun FeedPostColumn(
                         isRevealed = pinnedPost.id in revealedPosts,
                         nsfwAllowed = nsfwAllowed,
                         currentUserId = currentUserId,
+                        canReport = currentUserId != null,
                         onPostClick = onPostClick,
                         onLikeClick = onLikeClick,
                         onRevealClick = onRevealClick,
                         onMediaClick = onMediaClick,
                         onImageClick = onImageClick,
+                        onEmbedClick = onEmbedClick,
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
+                        onReportClick = onReportClick,
                         onAuthorClick = onAuthorClick
                     )
                 }
@@ -193,13 +202,16 @@ private fun FeedPostColumn(
                         isRevealed = post.id in revealedPosts,
                         nsfwAllowed = nsfwAllowed,
                         currentUserId = currentUserId,
+                        canReport = currentUserId != null,
                         onPostClick = onPostClick,
                         onLikeClick = onLikeClick,
                         onRevealClick = onRevealClick,
                         onMediaClick = onMediaClick,
                         onImageClick = onImageClick,
+                        onEmbedClick = onEmbedClick,
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
+                        onReportClick = onReportClick,
                         onAuthorClick = onAuthorClick
                     )
                 }

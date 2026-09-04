@@ -22,7 +22,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -68,13 +70,16 @@ fun PostCard(
     isRevealed: Boolean,
     nsfwAllowed: Boolean,
     currentUserId: String?,
+    canReport: Boolean = false,
     onPostClick: (Post) -> Unit,
     onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit = {},
     onEditClick: (Post) -> Unit,
     onDeleteClick: (Post) -> Unit,
+    onReportClick: (Post) -> Unit = {},
     onAuthorClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -89,9 +94,11 @@ fun PostCard(
         PostCardHeader(
             post = post,
             currentUserId = currentUserId,
+            canReport = canReport,
             onAuthorClick = onAuthorClick,
             onEditClick = onEditClick,
-            onDeleteClick = onDeleteClick
+            onDeleteClick = onDeleteClick,
+            onReportClick = onReportClick
         )
         Spacer(Modifier.height(8.dp))
         if (gated) {
@@ -103,7 +110,8 @@ fun PostCard(
             PostContentBody(
                 post = post,
                 onMediaClick = onMediaClick,
-                onImageClick = onImageClick
+                onImageClick = onImageClick,
+                onEmbedClick = onEmbedClick
             )
         }
         Spacer(Modifier.height(8.dp))
@@ -120,9 +128,11 @@ fun PostCard(
 private fun PostCardHeader(
     post: Post,
     currentUserId: String?,
+    canReport: Boolean,
     onAuthorClick: (String) -> Unit,
     onEditClick: (Post) -> Unit,
-    onDeleteClick: (Post) -> Unit
+    onDeleteClick: (Post) -> Unit,
+    onReportClick: (Post) -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Avatar(
@@ -161,32 +171,47 @@ private fun PostCardHeader(
             }
         }
         val isOwner = currentUserId != null && post.authorId == currentUserId
-        if (isOwner) {
+        if (isOwner || canReport) {
             PostOverflowMenu(
+                isOwner = isOwner,
                 onEditClick = { onEditClick(post) },
-                onDeleteClick = { onDeleteClick(post) }
+                onDeleteClick = { onDeleteClick(post) },
+                onReportClick = { onReportClick(post) }
             )
         }
     }
 }
 
 @Composable
-private fun PostOverflowMenu(onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
+private fun PostOverflowMenu(
+    isOwner: Boolean,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onReportClick: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     IconButton(onClick = { expanded = true }) {
         Icon(Icons.Default.MoreVert, contentDescription = null)
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.action_edit)) },
-            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-            onClick = { expanded = false; onEditClick() }
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.action_delete)) },
-            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-            onClick = { expanded = false; onDeleteClick() }
-        )
+        if (isOwner) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_edit)) },
+                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                onClick = { expanded = false; onEditClick() }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_delete)) },
+                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                onClick = { expanded = false; onDeleteClick() }
+            )
+        } else {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_report)) },
+                leadingIcon = { Icon(Icons.Default.Flag, contentDescription = null) },
+                onClick = { expanded = false; onReportClick() }
+            )
+        }
     }
 }
 
@@ -205,7 +230,8 @@ private fun PostContentWarning(isNsfw: Boolean, onReveal: () -> Unit) {
 private fun PostContentBody(
     post: Post,
     onMediaClick: (Post) -> Unit,
-    onImageClick: (List<String>, Int) -> Unit
+    onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit
 ) {
     if (!post.contentFormatted.isNullOrBlank() || !post.content.isNullOrBlank()) {
         MarkdownText(
@@ -222,9 +248,9 @@ private fun PostContentBody(
         )
     }
     val embed = post.embed
-    if (embed != null && (!embed.imageUrl.isNullOrBlank() || !embed.title.isNullOrBlank())) {
+    if (embed != null && embed.hasRenderableContent) {
         Spacer(Modifier.height(8.dp))
-        PostEmbedCard(embed = embed)
+        PostEmbedCard(embed = embed, onClick = onEmbedClick)
     }
     if (!post.mediaTitle.isNullOrBlank()) {
         Spacer(Modifier.height(8.dp))
@@ -348,22 +374,46 @@ private fun PostPreviewImage(
 }
 
 @Composable
-private fun PostEmbedCard(embed: Embed) {
+private fun PostEmbedCard(embed: Embed, onClick: (String) -> Unit) {
+    val targetUrl = embed.url?.takeIf { it.isNotBlank() }
+        ?: embed.videoUrl?.takeIf { it.isNotBlank() }
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = targetUrl != null) {
+                targetUrl?.let(onClick)
+            },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
             if (!embed.imageUrl.isNullOrBlank()) {
-                MediaCover(
-                    imageUrl = embed.imageUrl,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                )
+                Box {
+                    MediaCover(
+                        imageUrl = embed.imageUrl,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                    if (embed.isVideo) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(48.dp)
+                                .background(
+                                    Color.Black.copy(alpha = 0.55f),
+                                    RoundedCornerShape(24.dp)
+                                )
+                                .padding(8.dp)
+                        )
+                    }
+                }
                 Spacer(Modifier.height(4.dp))
             }
+
             if (!embed.siteName.isNullOrBlank()) {
                 Text(
                     text = embed.siteName,
@@ -385,6 +435,14 @@ private fun PostEmbedCard(embed: Embed) {
         }
     }
 }
+
+private val Embed.hasRenderableContent: Boolean
+    get() = !imageUrl.isNullOrBlank() ||
+        !title.isNullOrBlank() ||
+        !description.isNullOrBlank() ||
+        !siteName.isNullOrBlank() ||
+        !url.isNullOrBlank() ||
+        !videoUrl.isNullOrBlank()
 
 @Composable
 private fun PostMediaCard(post: Post, onMediaClick: (Post) -> Unit) {

@@ -38,6 +38,7 @@ import io.github.drumber.kitsune.data.presentation.model.media.Anime
 import io.github.drumber.kitsune.data.presentation.model.media.Media
 import io.github.drumber.kitsune.data.presentation.model.media.unit.Episode
 import io.github.drumber.kitsune.data.presentation.model.media.unit.MediaUnit
+import io.github.drumber.kitsune.data.presentation.model.report.ReportTarget
 import io.github.drumber.kitsune.preference.KitsunePref
 import io.github.drumber.kitsune.ui.compose.collectAsStateWithLifecycle
 import io.github.drumber.kitsune.ui.createpost.ComposeSearchBoxView
@@ -68,6 +69,7 @@ import io.github.drumber.kitsune.ui.reactiondetail.ReactionDetailViewModel
 import io.github.drumber.kitsune.ui.reactiondetail.compose.ReactionDetailScreen
 import io.github.drumber.kitsune.ui.replies.RepliesViewModel
 import io.github.drumber.kitsune.ui.replies.compose.RepliesScreen
+import io.github.drumber.kitsune.ui.report.ReportDialog
 import io.github.drumber.kitsune.util.logE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -133,6 +135,7 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
     val loginRequired by followingVm.loginRequired.collectAsStateWithLifecycle(initialValue = false)
     var globalSnackbar by remember { mutableStateOf<String?>(null) }
     var followingSnackbar by remember { mutableStateOf<String?>(null) }
+    var reportPostId by remember { mutableStateOf<String?>(null) }
 
     val postDeletedMsg = stringResource(R.string.post_deleted)
     val loginRequiredMsg = stringResource(R.string.comment_login_required)
@@ -226,15 +229,27 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
                 )
             )
         },
+        onEmbedClick = { url ->
+            navController.navigateSafe(Routes.WebView(url))
+        },
         onEditClick = { post -> navController.navigateSafe(Routes.CreatePost(editPostId = post.id)) },
         onDeleteClick = { post, page ->
             if (page == 0) globalVm.deletePost(post) else followingVm.deletePost(post)
         },
+        onReportClick = { post -> reportPostId = post.id },
         onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) },
         onRefresh = { page ->
             if (page == 0) globalPosts.refresh() else followingPosts.refresh()
         }
     )
+
+    reportPostId?.let { postId ->
+        ReportDialog(
+            itemId = postId,
+            target = ReportTarget.POST,
+            onDismiss = { reportPostId = null }
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -669,6 +684,7 @@ private fun GroupEmbeddedFeedContent(
     postCreatedRefresh: MutableSharedFlow<Unit>
 ) {
     val feedVm: FeedListViewModel = koinViewModel(key = "group_feed_$groupId")
+    var reportPostId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(groupId) {
         feedVm.setGroupFeed(groupId)
@@ -744,10 +760,20 @@ private fun GroupEmbeddedFeedContent(
                 )
             )
         },
+        onEmbedClick = { url -> navController.navigateSafe(Routes.WebView(url)) },
         onEditClick = { post -> navController.navigateSafe(Routes.CreatePost(editPostId = post.id)) },
         onDeleteClick = { post -> feedVm.deletePost(post) },
+        onReportClick = { post -> reportPostId = post.id },
         onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) }
     )
+
+    reportPostId?.let { postId ->
+        ReportDialog(
+            itemId = postId,
+            target = ReportTarget.POST,
+            onDismiss = { reportPostId = null }
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------
