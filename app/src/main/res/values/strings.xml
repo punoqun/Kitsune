@@ -34,6 +34,9 @@
     <string name="feed_pinned_post">Pinned</string>
     <string name="feed_spoiler_warning_title">Spoiler</string>
     <string name="feed_nsfw_warning_title">NSFW content</string>
+    <string name="feed_content_warning_spoiler">This post contains spoilers.</string>
+    <string name="feed_content_warning_nsfw">This post contains NSFW content.</string>
+    <string name="feed_content_warning_spoiler_nsfw">This post contains spoilers and NSFW content.</string>
     <string name="feed_content_warning_tap_to_view">Tap to view</string>
     <string name="feed_image_count_more" translatable="false">+%1$d</string>
     <string name="feed_likers_more" translatable="false">+%1$d</string>

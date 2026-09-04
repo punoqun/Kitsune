@@ -1,6 +1,7 @@
 package io.github.drumber.kitsune.ui.feed.compose
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +32,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,13 +46,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.feed.Embed
@@ -103,9 +107,16 @@ fun PostCard(
         Spacer(Modifier.height(8.dp))
         if (gated) {
             PostContentWarning(
-                isNsfw = post.nsfw && !post.spoiler,
+                post = post,
                 onReveal = { onRevealClick(post) }
             )
+            if (!post.mediaTitle.isNullOrBlank()) {
+                Spacer(Modifier.height(8.dp))
+                PostMediaCard(
+                    post = post,
+                    onMediaClick = onMediaClick
+                )
+            }
         } else {
             PostContentBody(
                 post = post,
@@ -216,13 +227,80 @@ private fun PostOverflowMenu(
 }
 
 @Composable
-private fun PostContentWarning(isNsfw: Boolean, onReveal: () -> Unit) {
-    FilledTonalButton(onClick = onReveal, modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(
-                if (isNsfw) R.string.feed_nsfw_warning_title else R.string.feed_spoiler_warning_title
+private fun PostContentWarning(post: Post, onReveal: () -> Unit) {
+    val unitLabel = SpoiledUnitLabel(post)
+    val warningText = when {
+        post.spoiler && post.nsfw -> R.string.feed_content_warning_spoiler_nsfw
+        post.nsfw -> R.string.feed_content_warning_nsfw
+        else -> R.string.feed_content_warning_spoiler
+    }
+    val kaomoji = when {
+        post.spoiler -> "(⊙_⊙)"
+        else -> "(ಠ_ಠ)"
+    }
+    val gateShape = RoundedCornerShape(8.dp)
+    val gateTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onReveal),
+        shape = gateShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clipToBounds()
+                .padding(vertical = 16.dp, horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = kaomoji,
+                color = gateTextColor.copy(alpha = 0.16f),
+                fontSize = 36.sp,
+                lineHeight = 36.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp)
             )
-        )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(warningText),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    textAlign = TextAlign.Center,
+                    color = gateTextColor
+                )
+                if (post.mediaTitle.isNullOrBlank() && unitLabel != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = unitLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = gateTextColor
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.feed_content_warning_tap_to_view),
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    color = gateTextColor.copy(alpha = 0.75f)
+                )
+            }
+        }
     }
 }
 
@@ -445,32 +523,59 @@ private val Embed.hasRenderableContent: Boolean
         !videoUrl.isNullOrBlank()
 
 @Composable
-private fun PostMediaCard(post: Post, onMediaClick: (Post) -> Unit) {
+private fun PostMediaCard(
+    post: Post,
+    onMediaClick: (Post) -> Unit,
+    showSynopsis: Boolean = true
+) {
     val canOpen = !post.mediaSlug.isNullOrBlank() && post.mediaIsAnime != null
+    val unitLabel = SpoiledUnitLabel(post)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = canOpen) { onMediaClick(post) },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val hasSynopsis = showSynopsis && !post.mediaSynopsis.isNullOrBlank()
+            val coverWidth = if (hasSynopsis) 60.dp else 48.dp
+            val coverHeight = if (hasSynopsis) 85.dp else 68.dp
             MediaCover(
                 imageUrl = post.mediaPosterUrl,
                 modifier = Modifier
-                    .size(width = 48.dp, height = 68.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .size(width = coverWidth, height = coverHeight)
+                    .clip(RoundedCornerShape(8.dp))
             )
-            Spacer(Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Spacer(Modifier.width(10.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = post.mediaTitle ?: "",
-                    style = MaterialTheme.typography.titleSmall,
+                    text = post.mediaTitle.orEmpty(),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (!post.mediaSynopsis.isNullOrBlank()) {
+                if (unitLabel != null) {
+                    Spacer(Modifier.height(2.dp))
                     Text(
-                        text = post.mediaSynopsis,
+                        text = unitLabel,
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (hasSynopsis) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = post.mediaSynopsis.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -479,6 +584,24 @@ private fun PostMediaCard(post: Post, onMediaClick: (Post) -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SpoiledUnitLabel(post: Post): String? {
+    val number = post.spoiledUnitNumber ?: return null
+    val numberLabel = stringResource(
+        if (post.spoiledUnitIsEpisode) {
+            R.string.feed_post_spoiled_episode
+        } else {
+            R.string.feed_post_spoiled_chapter
+        },
+        number
+    )
+    return if (!post.spoiledUnitTitle.isNullOrBlank()) {
+        stringResource(R.string.feed_post_unit_with_title, numberLabel, post.spoiledUnitTitle)
+    } else {
+        numberLabel
     }
 }
 
