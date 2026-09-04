@@ -55,6 +55,7 @@ import io.github.drumber.kitsune.ui.postdetail.PostDetailViewModel
 @Composable
 fun PostDetailScreen(
     post: Post?,
+    postLoadState: PostDetailViewModel.PostLoadState,
     postLikeState: PostDetailViewModel.PostLikeUiState,
     isPostRevealed: Boolean,
     nsfwAllowed: Boolean,
@@ -66,6 +67,7 @@ fun PostDetailScreen(
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
     onNavigateUp: () -> Unit,
+    onRetryPost: () -> Unit,
     onPostLikeClick: () -> Unit,
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
@@ -118,6 +120,7 @@ fun PostDetailScreen(
     ) { innerPadding ->
         PostDetailContent(
             post = post,
+            postLoadState = postLoadState,
             postLikeState = postLikeState,
             isPostRevealed = isPostRevealed,
             nsfwAllowed = nsfwAllowed,
@@ -125,6 +128,7 @@ fun PostDetailScreen(
             commentLikeOverrides = commentLikeOverrides,
             currentUserId = currentUserId,
             onPostLikeClick = onPostLikeClick,
+            onRetryPost = onRetryPost,
             onRevealPost = onRevealPost,
             onMediaClick = onMediaClick,
             onImageClick = onImageClick,
@@ -160,6 +164,7 @@ fun PostDetailScreen(
 @Composable
 private fun PostDetailContent(
     post: Post?,
+    postLoadState: PostDetailViewModel.PostLoadState,
     postLikeState: PostDetailViewModel.PostLikeUiState,
     isPostRevealed: Boolean,
     nsfwAllowed: Boolean,
@@ -167,6 +172,7 @@ private fun PostDetailContent(
     commentLikeOverrides: Map<String, Pair<Boolean, Int>>,
     currentUserId: String?,
     onPostLikeClick: () -> Unit,
+    onRetryPost: () -> Unit,
     onRevealPost: () -> Unit,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
@@ -186,32 +192,40 @@ private fun PostDetailContent(
     val refreshState = comments.loadState.refresh
     val appendState = comments.loadState.append
     LazyColumn(modifier = modifier) {
-        if (post != null) {
-            item(key = "post_${post.id}") {
-                PostDetailHeader(
-                    post = post,
-                    postLikeState = postLikeState,
-                    isPostRevealed = isPostRevealed,
-                    nsfwAllowed = nsfwAllowed,
-                    currentUserId = currentUserId,
-                    onPostLikeClick = onPostLikeClick,
-                    onRevealPost = onRevealPost,
-                    onMediaClick = onMediaClick,
-                    onImageClick = onImageClick,
-                    onEmbedClick = onEmbedClick,
-                    onEditPost = onEditPost,
-                    onDeletePost = onDeletePost,
-                    onReportPost = onReportPost,
-                    onAuthorClick = onAuthorClick
-                )
-                HorizontalDivider()
+        when {
+            post != null -> {
+                item(key = "post_${post.id}") {
+                    PostDetailHeader(
+                        post = post,
+                        postLikeState = postLikeState,
+                        isPostRevealed = isPostRevealed,
+                        nsfwAllowed = nsfwAllowed,
+                        currentUserId = currentUserId,
+                        onPostLikeClick = onPostLikeClick,
+                        onRevealPost = onRevealPost,
+                        onMediaClick = onMediaClick,
+                        onImageClick = onImageClick,
+                        onEmbedClick = onEmbedClick,
+                        onEditPost = onEditPost,
+                        onDeletePost = onDeletePost,
+                        onReportPost = onReportPost,
+                        onAuthorClick = onAuthorClick
+                    )
+                    HorizontalDivider()
+                }
             }
-        } else {
-            item {
-                DetailLoadingSkeleton(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
-                )
+            postLoadState == PostDetailViewModel.PostLoadState.Error -> {
+                item {
+                    PostLoadingError(onRetry = onRetryPost)
+                }
+            }
+            else -> {
+                item {
+                    DetailLoadingSkeleton(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
+                    )
+                }
             }
         }
         when {
@@ -249,6 +263,25 @@ private fun PostDetailContent(
             is LoadState.Loading -> item { PagingAppendLoading() }
             is LoadState.Error -> item { PagingAppendError(onRetry = { comments.retry() }) }
             is LoadState.NotLoading -> Unit
+        }
+    }
+}
+
+@Composable
+private fun PostLoadingError(onRetry: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.error_resource_loading),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.width(8.dp))
+        androidx.compose.material3.TextButton(onClick = onRetry) {
+            Text(stringResource(R.string.action_retry))
         }
     }
 }

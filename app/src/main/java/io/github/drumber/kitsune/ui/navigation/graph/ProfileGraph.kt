@@ -50,6 +50,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.chibatching.kotpref.livedata.asLiveData
@@ -142,7 +143,12 @@ fun NavGraphBuilder.profileGraph(navController: NavHostController) {
         MyProfileDestination(navController)
     }
 
-    composable<Routes.UserProfile> { entry ->
+    composable<Routes.UserProfile>(
+        deepLinks = listOf(
+            navDeepLink { uriPattern = "https://kitsu.app/users/{userId}" },
+            navDeepLink { uriPattern = "http://kitsu.app/users/{userId}" }
+        )
+    ) { entry ->
         val route = entry.toRoute<Routes.UserProfile>()
         UserProfileDestination(navController, route.userId, route.userName)
     }

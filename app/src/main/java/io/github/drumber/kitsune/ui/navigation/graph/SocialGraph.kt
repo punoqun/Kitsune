@@ -292,6 +292,7 @@ private fun PostDetailDestination(
     }
 
     val post by viewModel.postState.collectAsStateWithLifecycle()
+    val postLoadState by viewModel.postLoadState.collectAsStateWithLifecycle()
     val postLikeState by viewModel.postLikeState.collectAsStateWithLifecycle()
     val revealedPosts by viewModel.revealedPosts.collectAsStateWithLifecycle(initialValue = emptySet())
     val composerMode by viewModel.composerMode.collectAsStateWithLifecycle()
@@ -348,6 +349,7 @@ private fun PostDetailDestination(
 
     PostDetailScreen(
         post = post,
+        postLoadState = postLoadState,
         postLikeState = postLikeState,
         isPostRevealed = (post?.id ?: route.postId) in revealedPosts,
         nsfwAllowed = viewModel.nsfwAllowed,
@@ -359,6 +361,7 @@ private fun PostDetailDestination(
         snackbarMessage = snackbarMessage,
         onSnackbarShown = { snackbarMessage = null },
         onNavigateUp = { navController.navigateUp() },
+        onRetryPost = { viewModel.initFromPostId(route.postId) },
         onPostLikeClick = { viewModel.togglePostLike() },
         onRevealPost = { viewModel.revealCurrentPost() },
         onMediaClick = { p ->

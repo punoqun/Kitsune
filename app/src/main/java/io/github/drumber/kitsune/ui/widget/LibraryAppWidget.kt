@@ -57,6 +57,8 @@ import coil3.SingletonImageLoader
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.request.crossfade
 import coil3.request.transformations
 import coil3.toBitmap
 import coil3.transform.RoundedCornersTransformation
@@ -366,13 +368,21 @@ class LibraryAppWidget : GlanceAppWidget(), KoinComponent {
         url: String?,
         cornerRadius: Int
     ): Bitmap {
+        val density = context.resources.displayMetrics.density
+        val widthPx = (POSTER_IMG_WIDTH * density).toInt()
+        val heightPx = (POSTER_IMG_HEIGHT * density).toInt()
         val request = ImageRequest.Builder(context)
             .data(url)
+            .size(widthPx, heightPx)
             .transformations(RoundedCornersTransformation(cornerRadius.toFloat()))
+            .allowHardware(false)
+            .crossfade(false)
             .build()
-        return when (val result = SingletonImageLoader.get(context).execute(request)) {
-            is SuccessResult -> result.image.toBitmap()
-            is ErrorResult -> throw result.throwable
+        return withContext(Dispatchers.IO) {
+            when (val result = SingletonImageLoader.get(context).execute(request)) {
+                is SuccessResult -> result.image.toBitmap()
+                is ErrorResult -> throw result.throwable
+            }
         }
     }
 

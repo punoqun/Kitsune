@@ -24,6 +24,7 @@ import coil3.SingletonImageLoader
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import coil3.request.allowHardware
 import coil3.toBitmap
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.ui.navigation.Routes
@@ -61,7 +62,10 @@ private fun PhotoViewDestination(
 
     val saveImage: (String) -> Unit = { imageUrl ->
         scope.launch(Dispatchers.IO) {
-            val request = ImageRequest.Builder(context).data(imageUrl).build()
+            val request = ImageRequest.Builder(context)
+                .data(imageUrl)
+                .allowHardware(false)
+                .build()
             val bitmap = when (val result = SingletonImageLoader.get(context).execute(request)) {
                 is SuccessResult -> result.image.toBitmap()
                 is ErrorResult -> {

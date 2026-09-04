@@ -19,6 +19,7 @@ import coil3.request.ImageResult
 import coil3.request.crossfade
 import coil3.request.transformations
 import coil3.size.Size
+import coil3.svg.SvgDecoder
 import coil3.transform.Transformation
 import coil3.util.DebugLogger
 import io.github.drumber.kitsune.BuildConfig
@@ -48,6 +49,7 @@ fun buildKitsuneImageLoader(
         } else {
             add(GifDecoder.Factory())
         }
+        add(SvgDecoder.Factory())
         if (BuildConfig.SCREENSHOT_MODE_ENABLED) {
             add(BlurEverythingInterceptor)
         }

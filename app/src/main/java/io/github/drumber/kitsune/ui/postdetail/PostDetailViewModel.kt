@@ -37,6 +37,12 @@ class PostDetailViewModel(
     private val getLocalUserId: GetLocalUserIdUseCase
 ) : ViewModel() {
 
+    enum class PostLoadState {
+        Loading,
+        Loaded,
+        Error
+    }
+
     sealed interface Event {
         data object LoginRequired : Event
         data object CommentPosted : Event
@@ -64,6 +70,9 @@ class PostDetailViewModel(
     /** The current post, updated once the full version has been fetched from the network. */
     val postState = post.asStateFlow()
 
+    private val _postLoadState = MutableStateFlow(PostLoadState.Loading)
+    val postLoadState = _postLoadState.asStateFlow()
+
     private val _postLikeState = MutableStateFlow(PostLikeUiState())
     val postLikeState = _postLikeState.asStateFlow()
     private var postLikeId: String? = null
@@ -84,23 +93,33 @@ class PostDetailViewModel(
      * Compose navigation graph, which passes only the id as a route argument.
      */
     fun initFromPostId(postId: String) {
-        if (post.value?.id == postId) return
+        if (post.value?.id == postId && _postLoadState.value == PostLoadState.Loaded) return
+        post.value = null
+        _postLoadState.value = PostLoadState.Loading
         viewModelScope.launch {
             try {
-                postManagementRepository.getPost(postId)?.let { setPost(it) }
+                val loadedPost = postManagementRepository.getPost(postId)
+                if (loadedPost == null) {
+                    _postLoadState.value = PostLoadState.Error
+                } else {
+                    setPost(loadedPost, fetchFullPost = false)
+                    _postLoadState.value = PostLoadState.Loaded
+                }
             } catch (e: Exception) {
                 logE("Failed to load post '$postId'.", e)
+                _postLoadState.value = PostLoadState.Error
             }
         }
     }
 
-    fun setPost(newPost: Post) {
+    fun setPost(newPost: Post, fetchFullPost: Boolean = true) {
         if (post.value?.id == newPost.id) return
         post.update { newPost }
+        _postLoadState.value = PostLoadState.Loaded
         _postLikeState.update { PostLikeUiState(isLiked = false, count = newPost.likesCount) }
         // Some entry points (e.g. notifications) only carry a partial post without images,
         // media or embed. Re-fetch the full post so the detail screen renders completely.
-        viewModelScope.launch {
+        if (fetchFullPost) viewModelScope.launch {
             try {
                 postManagementRepository.getPost(newPost.id)?.let { fullPost ->
                     post.update { fullPost }
