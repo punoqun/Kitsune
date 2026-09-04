@@ -13,14 +13,20 @@ class FollowedGroupsPagingDataSource(
 
     override suspend fun requestPage(pageOffset: Int): PageData<NetworkGroupMember> {
         var nextOffset: Int? = pageOffset
+        var requestedPrev: Int? = null
+        var isFirstRequest = true
         while (nextOffset != null) {
             val page = dataSource.getGroupMembers(filter.pageOffset(nextOffset))
+            if (isFirstRequest) {
+                requestedPrev = page.prev
+                isFirstRequest = false
+            }
             val matching = page.data.orEmpty().filter { member ->
                 query.isNullOrBlank() ||
                     member.group?.name?.contains(query, ignoreCase = true) == true
             }
             if (matching.isNotEmpty() || page.next == null) {
-                return page.copy(data = matching)
+                return page.copy(data = matching, prev = requestedPrev)
             }
             nextOffset = page.next
         }

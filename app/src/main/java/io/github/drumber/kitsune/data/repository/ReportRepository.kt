@@ -53,6 +53,6 @@ class ReportRepository(
     private fun ReportTarget.toNaughtyType() = when (this) {
         ReportTarget.POST -> "Post"
         ReportTarget.COMMENT -> "Comment"
-        ReportTarget.MEDIA_REACTION -> "Media-reaction"
+        ReportTarget.MEDIA_REACTION -> "MediaReaction"
     }
 }
