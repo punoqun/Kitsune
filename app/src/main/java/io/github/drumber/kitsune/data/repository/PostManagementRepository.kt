@@ -16,7 +16,8 @@ import io.github.drumber.kitsune.data.source.network.media.model.unit.NetworkMed
 import io.github.drumber.kitsune.data.source.network.user.model.NetworkUser
 
 class PostManagementRepository(
-    private val postNetworkDataSource: PostNetworkDataSource
+    private val postNetworkDataSource: PostNetworkDataSource,
+    private val postStore: PostStore
 ) {
 
     private fun mediaStub(mediaId: String?, isAnime: Boolean): NetworkMedia? =
@@ -33,8 +34,10 @@ class PostManagementRepository(
     suspend fun getPost(postId: String): Post? {
         val filter = Filter()
             .include("user", "media", "spoiledUnit", "uploads")
-        return postNetworkDataSource.getPost(postId, filter.options)?.toPost()
+        return postNetworkDataSource.getPost(postId, filter.options)?.toPost()?.also(postStore::put)
     }
+
+    fun getCachedPost(postId: String): Post? = postStore.get(postId)
 
     /**
      * Creates a new post on the current user's profile feed. Returns the created post, or `null`
@@ -73,7 +76,7 @@ class PostManagementRepository(
                 .takeIf { it.isNotEmpty() }
                 ?.mapIndexed { index, id -> NetworkUpload(id = id, uploadOrder = index) }
         )
-        return postNetworkDataSource.postPost(post)?.toPost()
+        return postNetworkDataSource.postPost(post)?.toPost()?.also(postStore::put)
     }
 
     /**
@@ -104,11 +107,12 @@ class PostManagementRepository(
                 .takeIf { it.isNotEmpty() }
                 ?.mapIndexed { index, id -> NetworkUpload(id = id, uploadOrder = index) }
         )
-        return postNetworkDataSource.updatePost(postId, post)?.toPost()
+        return postNetworkDataSource.updatePost(postId, post)?.toPost()?.also(postStore::put)
     }
 
     /** Deletes the post with the given id. */
     suspend fun deletePost(postId: String) {
         postNetworkDataSource.deletePost(postId)
+        postStore.remove(postId)
     }
 }

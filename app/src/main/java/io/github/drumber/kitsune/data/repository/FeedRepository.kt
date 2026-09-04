@@ -7,12 +7,14 @@ import io.github.drumber.kitsune.config.Kitsu
 import io.github.drumber.kitsune.config.Repository
 import io.github.drumber.kitsune.data.common.Filter
 import io.github.drumber.kitsune.data.mapper.FeedMapper.toPost
+import io.github.drumber.kitsune.data.presentation.model.feed.Post
 import io.github.drumber.kitsune.data.source.network.CursorPageData
 import io.github.drumber.kitsune.data.source.network.feed.FeedNetworkDataSource
 import io.github.drumber.kitsune.data.source.network.feed.FeedPagingDataSource
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkActivityGroup
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkPost
 import io.github.drumber.kitsune.util.logE
+import io.github.drumber.kitsune.util.image.PostImagePreloader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.map
@@ -22,6 +24,8 @@ class FeedRepository(
     private val feedNetworkDataSource: FeedNetworkDataSource,
     private val postInteractionRepository: PostInteractionRepository,
     private val postInteractionStore: PostInteractionStore,
+    private val postStore: PostStore,
+    private val postImagePreloader: PostImagePreloader,
     private val userRepository: UserRepository,
     private val externalScope: CoroutineScope
 ) {
@@ -87,11 +91,19 @@ class FeedRepository(
                 // Resolve like state on the load path so the like icon is correct on first paint,
                 // but resolve liker avatars off it so the feed renders without waiting on them.
                 preloadLikeStates(posts)
-                externalScope.launch { preloadLikerAvatars(posts) }
+                externalScope.launch {
+                    cacheAndPreloadPosts(posts.map { it.toPost() })
+                    preloadLikerAvatars(posts)
+                }
             }
         }
     ).flow.map { pagingData ->
         pagingData.map { it.toPost() }
+    }
+
+    private fun cacheAndPreloadPosts(posts: List<Post>) {
+        posts.forEach(postStore::put)
+        postImagePreloader.preload(posts)
     }
 
     /**
@@ -143,6 +155,7 @@ class FeedRepository(
                     try {
                         val avatars = postInteractionRepository.getTopLikerAvatars(id)
                         if (avatars.isNotEmpty()) {
+                            postImagePreloader.preloadAvatars(avatars)
                             postInteractionStore.setLikerAvatars(id, avatars)
                         }
                     } catch (e: Exception) {

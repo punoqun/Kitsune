@@ -94,6 +94,10 @@ class PostDetailViewModel(
      */
     fun initFromPostId(postId: String) {
         if (post.value?.id == postId && _postLoadState.value == PostLoadState.Loaded) return
+        postManagementRepository.getCachedPost(postId)?.let { cachedPost ->
+            setPost(cachedPost)
+            return
+        }
         post.value = null
         _postLoadState.value = PostLoadState.Loading
         viewModelScope.launch {
@@ -116,7 +120,13 @@ class PostDetailViewModel(
         if (post.value?.id == newPost.id) return
         post.update { newPost }
         _postLoadState.value = PostLoadState.Loaded
-        _postLikeState.update { PostLikeUiState(isLiked = false, count = newPost.likesCount) }
+        val cachedInteraction = postInteractionStore.get(newPost.id)
+        _postLikeState.update {
+            PostLikeUiState(
+                isLiked = cachedInteraction?.isLiked ?: false,
+                count = cachedInteraction?.likesCount ?: newPost.likesCount
+            )
+        }
         // Some entry points (e.g. notifications) only carry a partial post without images,
         // media or embed. Re-fetch the full post so the detail screen renders completely.
         if (fetchFullPost) viewModelScope.launch {
@@ -130,6 +140,7 @@ class PostDetailViewModel(
             }
         }
         val userId = getLocalUserId() ?: return
+        if (cachedInteraction?.isLiked == false) return
         viewModelScope.launch {
             try {
                 val likeId = postInteractionRepository.getMyPostLikeId(newPost.id, userId)

@@ -34,6 +34,8 @@ import io.github.drumber.kitsune.util.json.IgnoreParcelablePropertyMixin
 import io.github.drumber.kitsune.util.network.AuthenticationInterceptor
 import io.github.drumber.kitsune.util.network.AuthenticationInterceptorImpl
 import io.github.drumber.kitsune.util.network.UserAgentInterceptor
+import io.github.drumber.kitsune.util.image.PostImagePreloader
+import io.github.drumber.kitsune.util.image.buildKitsuneImageLoader
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -73,7 +75,14 @@ val networkModule = module {
     factory<AuthenticationInterceptor> { AuthenticationInterceptorImpl(get()) }
 
     // default Coil image loader
-    single { createImageLoader(androidApplication(), get(named<ImagesHttpClient>())) }
+    single {
+        buildKitsuneImageLoader(
+            context = androidApplication(),
+            okHttpClient = get(named<ImagesHttpClient>()),
+            cacheDirectory = androidApplication().cacheDir
+        )
+    }
+    single { PostImagePreloader(androidApplication(), get()) }
     // social Coil image loader (with separate cache folder)
     single(named<SocialImagesLoader>()) {
         createImageLoader(

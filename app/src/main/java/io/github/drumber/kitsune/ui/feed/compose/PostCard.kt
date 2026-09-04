@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -74,6 +75,7 @@ fun PostCard(
     isRevealed: Boolean,
     nsfwAllowed: Boolean,
     currentUserId: String?,
+    truncateContent: Boolean = false,
     canReport: Boolean = false,
     onPostClick: (Post) -> Unit,
     onLikeClick: (Post, Boolean) -> Unit,
@@ -120,6 +122,7 @@ fun PostCard(
         } else {
             PostContentBody(
                 post = post,
+                truncateContent = truncateContent,
                 onMediaClick = onMediaClick,
                 onImageClick = onImageClick,
                 onEmbedClick = onEmbedClick
@@ -307,6 +310,7 @@ private fun PostContentWarning(post: Post, onReveal: () -> Unit) {
 @Composable
 private fun PostContentBody(
     post: Post,
+    truncateContent: Boolean,
     onMediaClick: (Post) -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
     onEmbedClick: (String) -> Unit
@@ -315,7 +319,17 @@ private fun PostContentBody(
         MarkdownText(
             content = post.content,
             contentFormatted = post.contentFormatted,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (truncateContent) {
+                        Modifier
+                            .heightIn(max = FeedPostContentMaxHeight)
+                            .clipToBounds()
+                    } else {
+                        Modifier
+                    }
+                )
         )
     }
     if (post.imageUrls.isNotEmpty()) {
@@ -325,6 +339,8 @@ private fun PostContentBody(
             onImageClick = { index -> onImageClick(post.imageUrls, index) }
         )
     }
+
+    private val FeedPostContentMaxHeight = 120.dp
     val embed = post.embed
     if (embed != null && embed.hasRenderableContent) {
         Spacer(Modifier.height(8.dp))

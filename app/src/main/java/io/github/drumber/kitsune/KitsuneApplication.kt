@@ -11,7 +11,6 @@ import com.chibatching.kotpref.Kotpref
 import com.chibatching.kotpref.livedata.asLiveData
 import io.github.drumber.kitsune.data.presentation.model.appupdate.UpdateCheckResult
 import io.github.drumber.kitsune.data.repository.AppUpdateRepository
-import io.github.drumber.kitsune.di.ImagesHttpClient
 import io.github.drumber.kitsune.di.appModule
 import io.github.drumber.kitsune.domain.auth.IsUserLoggedInUseCase
 import io.github.drumber.kitsune.domain.user.UpdateLocalUserUseCase
@@ -22,7 +21,6 @@ import io.github.drumber.kitsune.util.logD
 import io.github.drumber.kitsune.util.logE
 import io.github.drumber.kitsune.util.logI
 import io.github.drumber.kitsune.util.logW
-import io.github.drumber.kitsune.util.image.buildKitsuneImageLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,7 +31,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
-import org.koin.core.qualifier.named
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -79,11 +76,7 @@ class KitsuneApplication : Application(), SingletonImageLoader.Factory {
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader =
-        buildKitsuneImageLoader(
-            context = context,
-            okHttpClient = get(named<ImagesHttpClient>()),
-            cacheDirectory = cacheDir
-        )
+        get()
 
     private fun enableStrictMode() {        StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()

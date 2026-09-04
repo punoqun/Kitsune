@@ -25,6 +25,7 @@ import io.github.drumber.kitsune.data.repository.FollowRepository
 import io.github.drumber.kitsune.data.repository.GroupsRepository
 import io.github.drumber.kitsune.data.repository.PostInteractionRepository
 import io.github.drumber.kitsune.data.repository.PostManagementRepository
+import io.github.drumber.kitsune.data.repository.PostStore
 import io.github.drumber.kitsune.data.repository.UploadRepository
 import io.github.drumber.kitsune.data.repository.PostInteractionStore
 import io.github.drumber.kitsune.data.repository.ProfileLinkRepository
@@ -342,6 +343,8 @@ val dataModule = module {
             get(),
             get(),
             get(),
+            get(),
+            get(),
             CoroutineScope(SupervisorJob() + Dispatchers.Default)
         )
     }
@@ -395,6 +398,7 @@ val dataModule = module {
     single { PostLikeNetworkDataSource(get()) }
     single { PostInteractionRepository(get()) }
     single { PostInteractionStore() }
+    single { PostStore() }
 
     // Post creation
     factory {
@@ -412,7 +416,7 @@ val dataModule = module {
         )
     }
     single { PostNetworkDataSource(get()) }
-    single { PostManagementRepository(get()) }
+    single { PostManagementRepository(get(), get()) }
     factory {
         createService<UploadApi>(
             get(),
