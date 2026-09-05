@@ -101,7 +101,7 @@ fun RepliesScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             KitsuneTopAppBar(
-                title = {},
+                title = { Text(stringResource(R.string.title_comments)) },
                 navigationIcon = { KitsuneBackButton(onNavigateUp = onNavigateUp) },
                 scrollBehavior = scrollBehavior
             )
@@ -353,29 +353,27 @@ private fun ReplyInputBar(
                     }
                 }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = inputText,
-                    onValueChange = { inputText = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text(stringResource(R.string.comment_reply_hint)) },
-                    maxLines = 4,
-                    singleLine = false
-                )
-                Spacer(Modifier.width(4.dp))
-                IconButton(
-                    onClick = { onSubmit(inputText.trim()) },
-                    enabled = inputText.isNotBlank()
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Send,
-                        contentDescription = stringResource(R.string.action_send)
-                    )
-                }
-            }
+            OutlinedTextField(
+                value = inputText,
+                onValueChange = { inputText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                placeholder = { Text(stringResource(R.string.comment_reply_hint)) },
+                trailingIcon = {
+                    IconButton(
+                        onClick = { onSubmit(inputText.trim()) },
+                        enabled = inputText.isNotBlank()
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = stringResource(R.string.action_send)
+                        )
+                    }
+                },
+                maxLines = 3,
+                singleLine = false
+            )
         }
     }
 }

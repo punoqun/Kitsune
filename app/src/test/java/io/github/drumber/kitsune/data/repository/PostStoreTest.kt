@@ -44,6 +44,8 @@ class PostStoreTest {
         authorId = null,
         authorName = null,
         authorAvatarUrl = null,
+        groupId = null,
+        groupName = null,
         mediaTitle = null,
         mediaId = null,
         mediaPosterUrl = null,

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -40,6 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -290,8 +293,14 @@ private fun CommentFooter(
         if (!isReply && onReplyClick != null) {
             Spacer(Modifier.width(12.dp))
             TextButton(onClick = { onReplyClick(comment) }, modifier = Modifier.height(32.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.ChatBubbleOutline,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(4.dp))
                 Text(
-                    text = stringResource(R.string.comment_reply_hint),
+                    text = stringResource(R.string.comment_reply),
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -309,33 +318,50 @@ private fun CommentReplies(
     onAuthorClick: (String) -> Unit,
     onReportClick: ((Comment) -> Unit)?
 ) {
-    comment.replies.forEach { reply ->
-        CommentCard(
-            comment = reply,
-            isLiked = reply.isLikedByMe,
-            likesCount = reply.likesCount,
-            currentUserId = currentUserId,
-            isReply = true,
-            onLikeClick = onLikeClick,
-            onReportClick = onReportClick,
-            onImageClick = onImageClick,
-            onAuthorClick = onAuthorClick
-        )
-    }
     val hasMore = comment.repliesCount > comment.replies.size
-    if (hasMore && onViewAllRepliesClick != null) {
-        TextButton(
-            onClick = { onViewAllRepliesClick(comment) },
-            modifier = Modifier.padding(start = 40.dp)
-        ) {
-            Text(
-                text = pluralStringResource(
-                    R.plurals.comment_view_all_replies,
-                    comment.repliesCount,
-                    comment.repliesCount
-                ),
-                style = MaterialTheme.typography.labelMedium
+    if (comment.replies.isEmpty() && !hasMore) return
+
+    val threadColor = MaterialTheme.colorScheme.outlineVariant
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                val x = 20.dp.toPx()
+                drawLine(
+                    color = threadColor,
+                    start = Offset(x, 0f),
+                    end = Offset(x, size.height),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+    ) {
+        comment.replies.forEach { reply ->
+            CommentCard(
+                comment = reply,
+                isLiked = reply.isLikedByMe,
+                likesCount = reply.likesCount,
+                currentUserId = currentUserId,
+                isReply = true,
+                onLikeClick = onLikeClick,
+                onReportClick = onReportClick,
+                onImageClick = onImageClick,
+                onAuthorClick = onAuthorClick
             )
+        }
+        if (hasMore && onViewAllRepliesClick != null) {
+            TextButton(
+                onClick = { onViewAllRepliesClick(comment) },
+                modifier = Modifier.padding(start = 40.dp)
+            ) {
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.comment_view_all_replies,
+                        comment.repliesCount,
+                        comment.repliesCount
+                    ),
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
         }
     }
 }

@@ -23,6 +23,8 @@ object FeedMapper {
         authorId = user?.id,
         authorName = user?.name,
         authorAvatarUrl = user?.avatar?.toImage()?.largeOrDown(),
+        groupId = targetGroup?.id,
+        groupName = targetGroup?.name,
         mediaTitle = media?.getPreferredTitle(),
         mediaId = media?.id,
         mediaPosterUrl = media?.posterImage?.toImage()?.smallOrHigher(),

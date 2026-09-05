@@ -77,6 +77,7 @@ fun PostDetailScreen(
     onDeletePost: () -> Unit,
     onReportPost: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit,
     onCommentLikeClick: (Comment) -> Unit,
     onReplyClick: (Comment) -> Unit,
     onViewAllRepliesClick: (Comment) -> Unit,
@@ -103,7 +104,7 @@ fun PostDetailScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             KitsuneTopAppBar(
-                title = {},
+                title = { Text(stringResource(R.string.title_post)) },
                 navigationIcon = { KitsuneBackButton(onNavigateUp = onNavigateUp) },
                 scrollBehavior = scrollBehavior
             )
@@ -137,6 +138,7 @@ fun PostDetailScreen(
             onDeletePost = { showDeletePost = true },
             onReportPost = onReportPost,
             onAuthorClick = onAuthorClick,
+            onGroupClick = onGroupClick,
             onCommentLikeClick = onCommentLikeClick,
             onReplyClick = onReplyClick,
             onViewAllRepliesClick = onViewAllRepliesClick,
@@ -181,6 +183,7 @@ private fun PostDetailContent(
     onDeletePost: () -> Unit,
     onReportPost: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit,
     onCommentLikeClick: (Comment) -> Unit,
     onReplyClick: (Comment) -> Unit,
     onViewAllRepliesClick: (Comment) -> Unit,
@@ -209,7 +212,8 @@ private fun PostDetailContent(
                         onEditPost = onEditPost,
                         onDeletePost = onDeletePost,
                         onReportPost = onReportPost,
-                        onAuthorClick = onAuthorClick
+                        onAuthorClick = onAuthorClick,
+                        onGroupClick = onGroupClick
                     )
                     HorizontalDivider()
                 }
@@ -301,7 +305,8 @@ private fun PostDetailHeader(
     onEditPost: (Post) -> Unit,
     onDeletePost: () -> Unit,
     onReportPost: (Post) -> Unit,
-    onAuthorClick: (String) -> Unit
+    onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit
 ) {
     val likeState = io.github.drumber.kitsune.data.repository.PostInteractionStore.State(
         isLiked = postLikeState.isLiked,
@@ -323,7 +328,8 @@ private fun PostDetailHeader(
         onEditClick = onEditPost,
         onDeleteClick = { onDeletePost() },
         onReportClick = onReportPost,
-        onAuthorClick = onAuthorClick
+        onAuthorClick = onAuthorClick,
+        onGroupClick = onGroupClick
     )
 }
 
@@ -351,34 +357,32 @@ private fun CommentInputBar(
                 ComposerContextRow(composerMode = composerMode, onCancel = onCancel)
                 HorizontalDivider()
             }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val hint = when (composerMode) {
-                    is PostDetailViewModel.ComposerMode.Reply ->
-                        stringResource(R.string.comment_reply_hint)
-                    else -> stringResource(R.string.hint_add_comment)
-                }
-                OutlinedTextField(
-                    value = inputText,
-                    onValueChange = { inputText = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text(hint) },
-                    maxLines = 4,
-                    singleLine = false
-                )
-                Spacer(Modifier.width(4.dp))
-                IconButton(
-                    onClick = { if (inputText.isNotBlank()) onSubmit(inputText.trim()) },
-                    enabled = inputText.isNotBlank()
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Send,
-                        contentDescription = stringResource(R.string.action_send)
-                    )
-                }
+            val hint = when (composerMode) {
+                is PostDetailViewModel.ComposerMode.Reply ->
+                    stringResource(R.string.comment_reply_hint)
+                else -> stringResource(R.string.hint_add_comment)
             }
+            OutlinedTextField(
+                value = inputText,
+                onValueChange = { inputText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                placeholder = { Text(hint) },
+                trailingIcon = {
+                    IconButton(
+                        onClick = { if (inputText.isNotBlank()) onSubmit(inputText.trim()) },
+                        enabled = inputText.isNotBlank()
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = stringResource(R.string.action_send)
+                        )
+                    }
+                },
+                maxLines = 3,
+                singleLine = false
+            )
         }
     }
 }

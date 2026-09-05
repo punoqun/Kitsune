@@ -33,7 +33,7 @@ class PostManagementRepository(
      */
     suspend fun getPost(postId: String): Post? {
         val filter = Filter()
-            .include("user", "media", "spoiledUnit", "uploads")
+            .include("user", "targetGroup", "media", "spoiledUnit", "uploads")
         return postNetworkDataSource.getPost(postId, filter.options)?.toPost()?.also(postStore::put)
     }
 

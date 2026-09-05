@@ -544,6 +544,9 @@ private fun ProfileFeedTab(
         onDeleteClick = { post -> feedViewModel.deletePost(post) },
         onAuthorClick = { uid ->
             navController.navigateSafe(Routes.UserProfile(userId = uid))
+        },
+        onGroupClick = { groupId ->
+            navController.navigateSafe(Routes.GroupDetail(groupId))
         }
     )
 }

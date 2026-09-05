@@ -67,6 +67,7 @@ fun FeedScreen(
     onDeleteClick: (Post, Int) -> Unit,
     onReportClick: (Post) -> Unit,
     onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit,
     onRefresh: (Int) -> Unit,
     globalListState: LazyListState = rememberLazyListState(),
     followingListState: LazyListState = rememberLazyListState(),
@@ -163,6 +164,7 @@ fun FeedScreen(
                 onDeleteClick = { post -> onDeleteClick(post, page) },
                 onReportClick = onReportClick,
                 onAuthorClick = onAuthorClick,
+                onGroupClick = onGroupClick,
                 lazyListState = listState,
                 modifier = Modifier.fillMaxSize()
             )

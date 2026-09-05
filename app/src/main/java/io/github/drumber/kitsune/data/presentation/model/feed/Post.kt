@@ -21,6 +21,9 @@ data class Post(
     val authorName: String?,
     val authorAvatarUrl: String?,
 
+    val groupId: String?,
+    val groupName: String?,
+
     val mediaTitle: String?,
     val mediaId: String?,
     val mediaPosterUrl: String?,

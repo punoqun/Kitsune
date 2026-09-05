@@ -171,11 +171,13 @@ class FeedRepository(
         .include(
             "subject",
             "subject.user",
+            "subject.target_group",
             "subject.media",
             "subject.spoiled_unit",
             "subject.uploads",
             "subject.post",
             "subject.post.user",
+            "subject.post.target_group",
             "subject.post.media",
             "subject.post.spoiled_unit",
             "subject.post.uploads",

@@ -4,6 +4,7 @@ import io.github.drumber.kitsune.data.mapper.FeedMapper.toPost
 import io.github.drumber.kitsune.data.mapper.ImageMapper.toImage
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkPost
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkUpload
+import io.github.drumber.kitsune.data.source.network.group.model.NetworkGroup
 import io.github.drumber.kitsune.testutils.networkAnime
 import io.github.drumber.kitsune.testutils.networkImage
 import io.github.drumber.kitsune.testutils.networkManga
@@ -24,6 +25,7 @@ class FeedMapperTest {
         // given
         val user = networkUser(faker)
         val media = networkAnime(faker)
+        val group = NetworkGroup(id = "group-1", name = "Anime Club")
         val firstUpload = NetworkUpload(id = "u1", content = networkImage(faker), uploadOrder = 1)
         val secondUpload = NetworkUpload(id = "u2", content = networkImage(faker), uploadOrder = 0)
         val networkPost = NetworkPost(
@@ -36,6 +38,7 @@ class FeedMapperTest {
             commentsCount = 5,
             postLikesCount = 9,
             user = user,
+            targetGroup = group,
             media = media,
             uploads = listOf(firstUpload, secondUpload)
         )
@@ -61,6 +64,8 @@ class FeedMapperTest {
         assertThat(post.authorId).isEqualTo(user.id)
         assertThat(post.authorName).isEqualTo(user.name)
         assertThat(post.authorAvatarUrl).isEqualTo(user.avatar?.toImage()?.largeOrDown())
+        assertThat(post.groupId).isEqualTo(group.id)
+        assertThat(post.groupName).isEqualTo(group.name)
         assertThat(post.mediaTitle).isEqualTo(media.canonicalTitle)
         assertThat(post.mediaId).isEqualTo(media.id)
         assertThat(post.mediaPosterUrl).isEqualTo(media.posterImage?.toImage()?.smallOrHigher())
@@ -93,6 +98,8 @@ class FeedMapperTest {
         assertThat(post.uploadIds).isEmpty()
         assertThat(post.embed).isNull()
         assertThat(post.authorId).isNull()
+        assertThat(post.groupId).isNull()
+        assertThat(post.groupName).isNull()
         assertThat(post.mediaIsAnime).isNull()
     }
 

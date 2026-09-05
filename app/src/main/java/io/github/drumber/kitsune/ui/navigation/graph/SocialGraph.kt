@@ -261,6 +261,7 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
         },
         onReportClick = { post -> reportPostId = post.id },
         onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) },
+        onGroupClick = { groupId -> navController.navigateSafe(Routes.GroupDetail(groupId)) },
         onRefresh = { page ->
             if (page == 0) globalPosts.refresh() else followingPosts.refresh()
         }
@@ -388,6 +389,7 @@ private fun PostDetailDestination(
         onDeletePost = { viewModel.deletePost() },
         onReportPost = { p -> reportItem = p.id to ReportTarget.POST },
         onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) },
+        onGroupClick = { groupId -> navController.navigateSafe(Routes.GroupDetail(groupId)) },
         onCommentLikeClick = { comment -> viewModel.toggleCommentLike(comment) },
         onReplyClick = { comment -> viewModel.startReply(comment) },
         onViewAllRepliesClick = { comment ->
@@ -848,7 +850,10 @@ private fun GroupEmbeddedFeedContent(
         onEditClick = { post -> navController.navigateSafe(Routes.CreatePost(editPostId = post.id)) },
         onDeleteClick = { post -> feedVm.deletePost(post) },
         onReportClick = { post -> reportPostId = post.id },
-        onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) }
+        onAuthorClick = { userId -> navController.navigateSafe(Routes.UserProfile(userId)) },
+        onGroupClick = { targetGroupId ->
+            navController.navigateSafe(Routes.GroupDetail(targetGroupId))
+        }
     )
 
     reportPostId?.let { postId ->

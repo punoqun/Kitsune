@@ -193,6 +193,7 @@
     <string name="hint_add_comment">Add a comment…</string>
     <string name="action_send">Send</string>
     <string name="action_see_all">See all</string>
+    <string name="feed_post_see_more">See more</string>
     <string name="comment_login_required">Log in to like and comment.</string>
     <string name="comment_posted">Comment posted.</string>
     <string name="comment_action_failed">Something went wrong. Please try again.</string>

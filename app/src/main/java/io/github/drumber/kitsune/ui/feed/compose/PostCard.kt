@@ -14,12 +14,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
@@ -52,7 +52,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
@@ -87,6 +93,7 @@ fun PostCard(
     onDeleteClick: (Post) -> Unit,
     onReportClick: (Post) -> Unit = {},
     onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val needsWarning = post.spoiler || (post.nsfw && !nsfwAllowed)
@@ -102,6 +109,7 @@ fun PostCard(
             currentUserId = currentUserId,
             canReport = canReport,
             onAuthorClick = onAuthorClick,
+            onGroupClick = onGroupClick,
             onEditClick = onEditClick,
             onDeleteClick = onDeleteClick,
             onReportClick = onReportClick
@@ -144,6 +152,7 @@ private fun PostCardHeader(
     currentUserId: String?,
     canReport: Boolean,
     onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit,
     onEditClick: (Post) -> Unit,
     onDeleteClick: (Post) -> Unit,
     onReportClick: (Post) -> Unit
@@ -158,15 +167,41 @@ private fun PostCardHeader(
         )
         Spacer(Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = post.authorName ?: stringResource(R.string.feed_unknown_user),
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.clickable(enabled = post.authorId != null) {
-                    post.authorId?.let(onAuthorClick)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = post.authorName ?: stringResource(R.string.feed_unknown_user),
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .clickable(enabled = post.authorId != null) {
+                            post.authorId?.let(onAuthorClick)
+                        }
+                )
+                val groupId = post.groupId
+                val groupName = post.groupName
+                if (groupId != null && !groupName.isNullOrBlank()) {
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = groupName,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .clickable { onGroupClick(groupId) }
+                    )
                 }
-            )
+            }
             val timestamp = remember(post.createdAt) {
                 post.createdAt?.parseUtcDate()?.let { date ->
                     DateUtils.getRelativeTimeSpanString(
@@ -316,21 +351,32 @@ private fun PostContentBody(
     onEmbedClick: (String) -> Unit
 ) {
     if (!post.contentFormatted.isNullOrBlank() || !post.content.isNullOrBlank()) {
-        MarkdownText(
-            content = post.content,
-            contentFormatted = post.contentFormatted,
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (truncateContent) {
-                        Modifier
-                            .heightIn(max = FeedPostContentMaxHeight)
-                            .clipToBounds()
-                    } else {
-                        Modifier
+        if (truncateContent) {
+            val accentColor = MaterialTheme.colorScheme.primary
+            val summary = remember(post.content, post.contentFormatted, accentColor) {
+                post.contentFormatted
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { html ->
+                        AnnotatedString.fromHtml(
+                            htmlString = html,
+                            linkStyles = TextLinkStyles(
+                                style = SpanStyle(color = accentColor)
+                            )
+                        )
                     }
-                )
-        )
+                    ?: AnnotatedString(post.content.orEmpty())
+            }
+            TruncatedPostText(
+                text = summary,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            MarkdownText(
+                content = post.content,
+                contentFormatted = post.contentFormatted,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
     if (post.imageUrls.isNotEmpty()) {
         Spacer(Modifier.height(8.dp))
@@ -340,7 +386,6 @@ private fun PostContentBody(
         )
     }
 
-    private val FeedPostContentMaxHeight = 120.dp
     val embed = post.embed
     if (embed != null && embed.hasRenderableContent) {
         Spacer(Modifier.height(8.dp))
@@ -350,6 +395,57 @@ private fun PostContentBody(
         Spacer(Modifier.height(8.dp))
         PostMediaCard(post = post, onMediaClick = onMediaClick)
     }
+}
+
+@Composable
+private fun TruncatedPostText(
+    text: AnnotatedString,
+    modifier: Modifier = Modifier
+) {
+    val seeMore = stringResource(R.string.feed_post_see_more)
+    val accentColor = MaterialTheme.colorScheme.primary
+    var contentEnd by remember(text) { mutableStateOf(text.length) }
+    var truncated by remember(text) { mutableStateOf(false) }
+    val displayText = buildAnnotatedString {
+        append(text.subSequence(0, trimmedEnd(text.text, contentEnd)))
+        if (truncated) {
+            withStyle(SpanStyle(color = accentColor)) {
+                append(" · ")
+                append(seeMore)
+            }
+        }
+    }
+
+    Text(
+        text = displayText,
+        style = MaterialTheme.typography.bodyMedium,
+        maxLines = 5,
+        overflow = TextOverflow.Clip,
+        onTextLayout = { result ->
+            if (result.hasVisualOverflow) {
+                val candidateEnd = if (truncated) {
+                    contentEnd
+                } else {
+                    result.getLineEnd(lineIndex = 4, visibleEnd = true)
+                }
+                contentEnd = previousWordBoundary(text.text, candidateEnd)
+                truncated = true
+            }
+        },
+        modifier = modifier
+    )
+}
+
+private fun trimmedEnd(text: String, end: Int): Int {
+    var index = end.coerceIn(0, text.length)
+    while (index > 0 && text[index - 1].isWhitespace()) index--
+    return index
+}
+
+private fun previousWordBoundary(text: String, end: Int): Int {
+    var index = trimmedEnd(text, end)
+    while (index > 0 && !text[index - 1].isWhitespace()) index--
+    return index
 }
 
 @Composable

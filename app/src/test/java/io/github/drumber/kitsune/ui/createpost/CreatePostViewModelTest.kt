@@ -363,6 +363,8 @@ class CreatePostViewModelTest {
         authorId = "user-1",
         authorName = "Author",
         authorAvatarUrl = null,
+        groupId = null,
+        groupName = null,
         mediaTitle = "Media title",
         mediaId = "media-1",
         mediaPosterUrl = null,

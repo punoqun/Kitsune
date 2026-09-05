@@ -65,6 +65,7 @@ fun FeedListScreen(
     onDeleteClick: (Post) -> Unit,
     onReportClick: (Post) -> Unit = {},
     onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
@@ -109,7 +110,8 @@ fun FeedListScreen(
                     onEditClick = onEditClick,
                     onDeleteRequest = { postToDelete = it },
                     onReportClick = onReportClick,
-                    onAuthorClick = onAuthorClick
+                    onAuthorClick = onAuthorClick,
+                    onGroupClick = onGroupClick
                 )
             }
         }
@@ -153,7 +155,8 @@ private fun FeedPostColumn(
     onEditClick: (Post) -> Unit,
     onDeleteRequest: (Post) -> Unit,
     onReportClick: (Post) -> Unit,
-    onAuthorClick: (String) -> Unit
+    onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit
 ) {
     val refreshState = posts.loadState.refresh
     val appendState = posts.loadState.append
@@ -191,7 +194,8 @@ private fun FeedPostColumn(
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
                         onReportClick = onReportClick,
-                        onAuthorClick = onAuthorClick
+                        onAuthorClick = onAuthorClick,
+                        onGroupClick = onGroupClick
                     )
                 }
             }
@@ -214,7 +218,8 @@ private fun FeedPostColumn(
                         onEditClick = onEditClick,
                         onDeleteClick = onDeleteRequest,
                         onReportClick = onReportClick,
-                        onAuthorClick = onAuthorClick
+                        onAuthorClick = onAuthorClick,
+                        onGroupClick = onGroupClick
                     )
                 }
             }
