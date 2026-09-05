@@ -257,7 +257,8 @@ private fun PostDetailContent(
                             onDeleteClick = onDeleteComment,
                             onReportClick = onReportComment,
                             onImageClick = { imageUrl -> onImageClick(listOf(imageUrl), 0) },
-                            onAuthorClick = onAuthorClick
+                            onAuthorClick = onAuthorClick,
+                            likeOverrides = commentLikeOverrides
                         )
                     }
                 }

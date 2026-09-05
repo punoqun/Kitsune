@@ -438,14 +438,18 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
         }
 
         val items = viewModel.dataSource.collectAsLazyPagingItems()
+        val revealedPosts by viewModel.revealedPosts.collectAsStateWithLifecycle()
 
         MediaFeedScreen(
             title = stringResource(R.string.title_posts),
             items = items,
+            revealedPosts = revealedPosts,
+            nsfwAllowed = viewModel.nsfwAllowed,
             onNavigateUp = { navController.navigateUp() },
             onPostClick = { post ->
                 navController.navigateSafe(Routes.PostDetail(post.id))
             },
+            onRevealClick = viewModel::revealPost,
             onAuthorClick = { userId ->
                 navController.navigateSafe(Routes.UserProfile(userId))
             }

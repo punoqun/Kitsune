@@ -14,6 +14,8 @@ import io.github.drumber.kitsune.data.repository.UserRepository
 import io.github.drumber.kitsune.data.source.local.user.model.LocalSfwFilterPreference
 import io.github.drumber.kitsune.domain.user.GetLocalUserIdUseCase
 import io.github.drumber.kitsune.util.logE
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -46,9 +48,6 @@ class MediaFeedViewModel(
 
     private val mediaFeedKey = MutableStateFlow<MediaFeedKey?>(null)
 
-    // Known like ids keyed by post id, used to unlike without a lookup.
-    private val postLikeIds = mutableMapOf<String, String?>()
-
     private val actionEventChannel = Channel<ActionEvent>(Channel.BUFFERED)
     val actionEvents: Flow<ActionEvent> = actionEventChannel.receiveAsFlow()
 
@@ -58,6 +57,8 @@ class MediaFeedViewModel(
     val nsfwAllowed: Boolean
         get() = userRepository.localUser.value?.sfwFilterPreference ==
                 LocalSfwFilterPreference.NSFW_EVERYWHERE
+
+    val revealedPosts = contentRevealStore.revealed
 
     fun initMediaFeed(mediaId: String, isAnime: Boolean) {
         val key = MediaFeedKey.Media(mediaId, isAnime)
@@ -88,23 +89,25 @@ class MediaFeedViewModel(
     fun togglePostLike(post: Post, targetLiked: Boolean) {
         val userId = getLocalUserId() ?: return
 
-        val currentCount = postInteractionStore.get(post.id)?.likesCount ?: post.likesCount
-        val targetCount = (currentCount + if (targetLiked) 1 else -1).coerceAtLeast(0)
-        postInteractionStore.setLikeState(post.id, targetLiked, targetCount)
+        val previousState = postInteractionStore.get(post.id)
+        val previousLiked = previousState?.isLiked ?: !targetLiked
+        val previousCount = previousState?.likesCount ?: post.likesCount
+        val targetCount = (previousCount + if (targetLiked) 1 else -1).coerceAtLeast(0)
+        val revision = postInteractionStore.setLikeState(post.id, targetLiked, targetCount)
 
-        viewModelScope.launch {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                if (targetLiked) {
-                    postLikeIds[post.id] = postInteractionRepository.likePost(post.id, userId)
-                } else {
-                    val likeId = postLikeIds[post.id]
-                        ?: postInteractionRepository.getMyPostLikeId(post.id, userId)
-                    likeId?.let { postInteractionRepository.unlikePost(it) }
-                    postLikeIds[post.id] = null
-                }
+                postInteractionRepository.setPostLiked(post.id, userId, targetLiked)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logE("Failed to toggle like for post '${post.id}'.", e)
-                postInteractionStore.setLikeState(post.id, !targetLiked, post.likesCount)
+                postInteractionStore.restoreLikeState(
+                    post.id,
+                    revision,
+                    previousLiked,
+                    previousCount
+                )
             }
         }
     }

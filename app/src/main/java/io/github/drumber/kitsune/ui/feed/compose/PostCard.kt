@@ -265,7 +265,7 @@ private fun PostOverflowMenu(
 }
 
 @Composable
-private fun PostContentWarning(post: Post, onReveal: () -> Unit) {
+internal fun PostContentWarning(post: Post, onReveal: () -> Unit) {
     val unitLabel = SpoiledUnitLabel(post)
     val warningText = when {
         post.spoiler && post.nsfw -> R.string.feed_content_warning_spoiler_nsfw

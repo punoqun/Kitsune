@@ -7,7 +7,7 @@ import io.github.drumber.kitsune.data.repository.UserRepository
 import kotlinx.coroutines.flow.map
 
 class MainActivityViewModel(
-    userRepository: UserRepository,
+    private val userRepository: UserRepository,
     private val accessTokenRepository: AccessTokenRepository
 ) : ViewModel() {
 
@@ -19,4 +19,8 @@ class MainActivityViewModel(
         accessTokenRepository.accessTokenState.map { it == AccessTokenState.PRESENT }
 
     fun isLoggedIn() = accessTokenRepository.accessTokenState.value == AccessTokenState.PRESENT
+
+    fun isReLoginRequired() = userRepository.isReLoginRequired()
+
+    fun consumeReLoginRequirement() = userRepository.consumeReLoginRequirement()
 }

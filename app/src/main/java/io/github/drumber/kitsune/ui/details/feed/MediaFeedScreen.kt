@@ -29,14 +29,18 @@ import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopA
 import io.github.drumber.kitsune.ui.component.compose.list.KitsunePullToRefreshBox
 import io.github.drumber.kitsune.ui.component.compose.list.PagingColumn
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
+import io.github.drumber.kitsune.ui.feed.compose.PostContentWarning
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaFeedScreen(
     title: String,
     items: LazyPagingItems<Post>,
+    revealedPosts: Set<String>,
+    nsfwAllowed: Boolean,
     onNavigateUp: () -> Unit,
     onPostClick: (Post) -> Unit,
+    onRevealClick: (Post) -> Unit,
     onAuthorClick: (String) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -67,7 +71,10 @@ fun MediaFeedScreen(
                 if (item != null) {
                     PostItem(
                         post = item,
+                        isRevealed = item.id in revealedPosts,
+                        nsfwAllowed = nsfwAllowed,
                         onClick = { onPostClick(item) },
+                        onRevealClick = { onRevealClick(item) },
                         onAuthorClick = onAuthorClick
                     )
                 }
@@ -79,7 +86,10 @@ fun MediaFeedScreen(
 @Composable
 private fun PostItem(
     post: Post,
+    isRevealed: Boolean,
+    nsfwAllowed: Boolean,
     onClick: () -> Unit,
+    onRevealClick: () -> Unit,
     onAuthorClick: (String) -> Unit
 ) {
     Column(
@@ -104,14 +114,19 @@ private fun PostItem(
             )
         }
         Spacer(Modifier.height(6.dp))
-        val content = post.content?.takeIf { it.isNotBlank() } ?: post.contentFormatted
-        if (!content.isNullOrBlank()) {
-            Text(
-                text = content,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 5,
-                overflow = TextOverflow.Ellipsis
-            )
+        val gated = (post.spoiler || (post.nsfw && !nsfwAllowed)) && !isRevealed
+        if (gated) {
+            PostContentWarning(post = post, onReveal = onRevealClick)
+        } else {
+            val content = post.content?.takeIf { it.isNotBlank() } ?: post.contentFormatted
+            if (!content.isNullOrBlank()) {
+                Text(
+                    text = content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

@@ -24,6 +24,11 @@ class ContentRevealStore(
     private val _revealed = MutableStateFlow<Set<String>>(emptySet())
     val revealed: StateFlow<Set<String>> = _revealed.asStateFlow()
 
+    /** Clears reveal decisions when the authenticated user changes. */
+    fun clear() {
+        _revealed.value = emptySet()
+    }
+
     fun reveal(postId: String) {
         _revealed.update { current ->
             if (postId in current) return@update current

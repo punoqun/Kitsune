@@ -396,7 +396,7 @@ val dataModule = module {
         )
     }
     single { PostLikeNetworkDataSource(get()) }
-    single { PostInteractionRepository(get()) }
+    single { PostInteractionRepository(get(), get()) }
     single { PostInteractionStore() }
     single { PostStore() }
 

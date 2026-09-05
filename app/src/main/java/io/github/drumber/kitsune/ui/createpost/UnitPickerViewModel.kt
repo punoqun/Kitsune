@@ -15,11 +15,13 @@ class UnitPickerViewModel(
     private val mediaUnitRepository: MediaUnitRepository
 ) : ViewModel() {
 
+    private var dataSourceKey: Pair<String, Boolean>? = null
     private var dataSourceFlow: Flow<PagingData<MediaUnit>>? = null
 
     /** Returns a pager for the given media's episodes (anime) or chapters (manga), ordered by number. */
     fun unitPager(mediaId: String, isAnime: Boolean): Flow<PagingData<MediaUnit>> {
-        dataSourceFlow?.let { return it }
+        val key = mediaId to isAnime
+        if (dataSourceKey == key) dataSourceFlow?.let { return it }
 
         val filter = Filter().sort("number")
         val type = if (isAnime) {
@@ -32,6 +34,9 @@ class UnitPickerViewModel(
 
         return mediaUnitRepository.mediaUnitPager(type, filter, Kitsu.DEFAULT_PAGE_SIZE)
             .cachedIn(viewModelScope)
-            .also { dataSourceFlow = it }
+            .also {
+                dataSourceKey = key
+                dataSourceFlow = it
+            }
     }
 }

@@ -37,6 +37,8 @@ class UserRepository(
 
     private val _userReLogInPrompt = MutableSharedFlow<Unit>()
     val userReLogInPrompt = _userReLogInPrompt.asSharedFlow()
+    @Volatile
+    private var reLoginRequired = false
 
     fun hasLocalUser() = _localUser.value != null
 
@@ -68,7 +70,14 @@ class UserRepository(
         }
     }
 
+    fun isReLoginRequired() = reLoginRequired
+
+    fun consumeReLoginRequirement() {
+        reLoginRequired = false
+    }
+
     suspend fun promptUserReLogIn() {
+        reLoginRequired = true
         _userReLogInPrompt.emit(Unit)
     }
 

@@ -71,6 +71,7 @@ fun CommentCard(
     onReportClick: ((Comment) -> Unit)? = null,
     onImageClick: ((String) -> Unit)? = null,
     onAuthorClick: (String) -> Unit,
+    likeOverrides: Map<String, Pair<Boolean, Int>> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -110,7 +111,8 @@ fun CommentCard(
                 onViewAllRepliesClick = onViewAllRepliesClick,
                 onImageClick = onImageClick,
                 onAuthorClick = onAuthorClick,
-                onReportClick = onReportClick
+                onReportClick = onReportClick,
+                likeOverrides = likeOverrides
             )
             HorizontalDivider(modifier = Modifier.padding(top = 4.dp))
         }
@@ -316,7 +318,8 @@ private fun CommentReplies(
     onViewAllRepliesClick: ((Comment) -> Unit)?,
     onImageClick: ((String) -> Unit)?,
     onAuthorClick: (String) -> Unit,
-    onReportClick: ((Comment) -> Unit)?
+    onReportClick: ((Comment) -> Unit)?,
+    likeOverrides: Map<String, Pair<Boolean, Int>>
 ) {
     val hasMore = comment.repliesCount > comment.replies.size
     if (comment.replies.isEmpty() && !hasMore) return
@@ -336,10 +339,12 @@ private fun CommentReplies(
             }
     ) {
         comment.replies.forEach { reply ->
+            val (isLiked, likesCount) = likeOverrides[reply.id]
+                ?: Pair(reply.isLikedByMe, reply.likesCount)
             CommentCard(
                 comment = reply,
-                isLiked = reply.isLikedByMe,
-                likesCount = reply.likesCount,
+                isLiked = isLiked,
+                likesCount = likesCount,
                 currentUserId = currentUserId,
                 isReply = true,
                 onLikeClick = onLikeClick,

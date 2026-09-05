@@ -57,14 +57,26 @@ class UnitPickerViewModelTest {
     }
 
     @Test
-    fun `unitPager caches the pager and reuses it on subsequent calls`() {
+    fun `unitPager reuses the pager for the same media`() {
+        val repository = mediaUnitRepository()
+        val vm = UnitPickerViewModel(repository)
+
+        val first = vm.unitPager("media-1", isAnime = true)
+        val second = vm.unitPager("media-1", isAnime = true)
+
+        assertThat(second).isSameAs(first)
+        verify(repository, times(1)).mediaUnitPager(any(), any(), any())
+    }
+
+    @Test
+    fun `unitPager creates a new pager when media changes`() {
         val repository = mediaUnitRepository()
         val vm = UnitPickerViewModel(repository)
 
         val first = vm.unitPager("media-1", isAnime = true)
         val second = vm.unitPager("media-2", isAnime = false)
 
-        assertThat(second).isSameAs(first)
-        verify(repository, times(1)).mediaUnitPager(any(), any(), any())
+        assertThat(second).isNotSameAs(first)
+        verify(repository, times(2)).mediaUnitPager(any(), any(), any())
     }
 }

@@ -44,6 +44,7 @@ fun WebViewScreen(
     getAccessToken: () -> LocalAccessToken?,
     onNavigateUp: () -> Unit,
     onWebViewReady: (WebView) -> Unit,
+    onWebViewRelease: (WebView) -> Unit,
     openUrl: (String) -> Unit,
     copyToClipboard: (String, String) -> Unit,
     modifier: Modifier = Modifier
@@ -97,7 +98,14 @@ fun WebViewScreen(
                         onWebViewReady(this)
                     }
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                onRelease = { webView ->
+                    onWebViewRelease(webView)
+                    webView.stopLoading()
+                    webView.webChromeClient = null
+                    webView.webViewClient = WebViewClient()
+                    webView.destroy()
+                }
             )
             if (isLoading.value) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

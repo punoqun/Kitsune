@@ -15,7 +15,10 @@ import io.github.drumber.kitsune.data.repository.UserRepository
 import io.github.drumber.kitsune.data.source.local.user.model.LocalSfwFilterPreference
 import io.github.drumber.kitsune.domain.user.GetLocalUserIdUseCase
 import io.github.drumber.kitsune.util.logE
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +45,8 @@ class PostDetailViewModel(
         Loaded,
         Error
     }
+
+    private var postLikeLookupJob: Job? = null
 
     sealed interface Event {
         data object LoginRequired : Event
@@ -141,11 +146,14 @@ class PostDetailViewModel(
         }
         val userId = getLocalUserId() ?: return
         if (cachedInteraction?.isLiked == false) return
-        viewModelScope.launch {
+        postLikeLookupJob?.cancel()
+        postLikeLookupJob = viewModelScope.launch {
             try {
                 val likeId = postInteractionRepository.getMyPostLikeId(newPost.id, userId)
                 postLikeId = likeId
                 _postLikeState.update { it.copy(isLiked = likeId != null) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logE("Failed to load post like state for post '${newPost.id}'.", e)
             }
@@ -177,6 +185,9 @@ class PostDetailViewModel(
             return
         }
 
+        postLikeLookupJob?.cancel()
+        postLikeLookupJob = null
+
         val state = _postLikeState.value
         val targetLiked = !state.isLiked
         val targetCount = (state.count + if (targetLiked) 1 else -1).coerceAtLeast(0)
@@ -187,21 +198,26 @@ class PostDetailViewModel(
                 count = targetCount
             )
         }
-        postInteractionStore.setLikeState(currentPost.id, targetLiked, targetCount)
+        val revision = postInteractionStore.setLikeState(
+            currentPost.id,
+            targetLiked,
+            targetCount
+        )
 
-        viewModelScope.launch {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                if (targetLiked) {
-                    postLikeId = postInteractionRepository.likePost(currentPost.id, userId)
-                } else {
-                    postLikeId?.let { postInteractionRepository.unlikePost(it) }
-                    postLikeId = null
-                }
+                postInteractionRepository.setPostLiked(currentPost.id, userId, targetLiked)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logE("Failed to toggle like for post '${currentPost.id}'.", e)
-                // Revert optimistic update.
-                _postLikeState.update { state }
-                postInteractionStore.setLikeState(currentPost.id, state.isLiked, state.count)
+                val restored = postInteractionStore.restoreLikeState(
+                    currentPost.id,
+                    revision,
+                    state.isLiked,
+                    state.count
+                )
+                if (restored) _postLikeState.update { state }
                 eventChannel.send(Event.Error)
             }
         }

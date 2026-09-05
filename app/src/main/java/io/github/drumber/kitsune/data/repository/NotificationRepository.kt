@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -31,22 +32,34 @@ class NotificationRepository(
     }
 
     private val notificationFetchMutex = Mutex()
+    private val stateGeneration = AtomicLong()
+    @Volatile
     private var lastNotificationFetch = -1L
 
     private val _unseenNotificationsCount = MutableStateFlow<Int?>(null)
     val unseenNotificationsCount = _unseenNotificationsCount.asStateFlow()
 
+    fun clearUserState() {
+        stateGeneration.incrementAndGet()
+        lastNotificationFetch = -1L
+        _unseenNotificationsCount.value = null
+    }
+
     suspend fun updateUnseenNotificationsCount(): Unit = notificationFetchMutex.withLock {
         val userId = userRepository.localUser.value?.id ?: return
+        val generation = stateGeneration.get()
 
         if (lastNotificationFetch == -1L || System.currentTimeMillis() - lastNotificationFetch >= NOTIFICATION_UPDATE_INTERVAL) {
             try {
                 val count = notificationNetworkDataSource.getUnseenNotificationsCount(userId)
-                _unseenNotificationsCount.value = count
+                if (generation == stateGeneration.get() &&
+                    userRepository.localUser.value?.id == userId
+                ) {
+                    _unseenNotificationsCount.value = count
+                    lastNotificationFetch = System.currentTimeMillis()
+                }
             } catch (e: Exception) {
                 logE("Error while updating unseen notifications.", e)
-            } finally {
-                lastNotificationFetch = System.currentTimeMillis()
             }
         }
     }

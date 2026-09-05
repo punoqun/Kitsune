@@ -30,12 +30,39 @@ class PostInteractionStore(
 
     private val _states = MutableStateFlow<Map<String, State>>(emptyMap())
     val states: StateFlow<Map<String, State>> = _states.asStateFlow()
+    private val likeRevisions = mutableMapOf<String, Long>()
+    private var nextLikeRevision = 0L
 
     fun get(postId: String): State? = _states.value[postId]
 
-    /** Updates the like state and like count for the given post. */
-    fun setLikeState(postId: String, isLiked: Boolean, likesCount: Int) {
+    /** Clears interaction overrides when the authenticated user changes. */
+    @Synchronized
+    fun clear() {
+        likeRevisions.clear()
+        _states.value = emptyMap()
+    }
+
+    /** Updates the like state and returns a revision that can guard a later rollback. */
+    @Synchronized
+    fun setLikeState(postId: String, isLiked: Boolean, likesCount: Int): Long {
+        val revision = ++nextLikeRevision
+        likeRevisions[postId] = revision
         updateState(postId) { it.copy(isLiked = isLiked, likesCount = likesCount) }
+        return revision
+    }
+
+    /** Restores a failed optimistic update only if no newer update superseded it. */
+    @Synchronized
+    fun restoreLikeState(
+        postId: String,
+        expectedRevision: Long,
+        isLiked: Boolean,
+        likesCount: Int
+    ): Boolean {
+        if (likeRevisions[postId] != expectedRevision) return false
+        likeRevisions[postId] = ++nextLikeRevision
+        updateState(postId) { it.copy(isLiked = isLiked, likesCount = likesCount) }
+        return true
     }
 
     /** Updates the comment count for the given post. */

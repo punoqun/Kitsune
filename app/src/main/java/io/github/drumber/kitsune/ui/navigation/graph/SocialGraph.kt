@@ -165,10 +165,10 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
 
     LaunchedEffect(Unit) {
         globalVm.likeEvents.collect { event ->
-            globalSnackbar = when (event) {
-                FeedListViewModel.LikeEvent.LoginRequired -> loginRequiredMsg
-                is FeedListViewModel.LikeEvent.Failed -> actionFailedMsg
-                is FeedListViewModel.LikeEvent.Updated -> null
+            when (event) {
+                FeedListViewModel.LikeEvent.LoginRequired -> globalSnackbar = loginRequiredMsg
+                is FeedListViewModel.LikeEvent.Failed -> globalSnackbar = actionFailedMsg
+                is FeedListViewModel.LikeEvent.Updated -> Unit
             }
         }
     }
@@ -185,10 +185,10 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
     }
     LaunchedEffect(Unit) {
         followingVm.likeEvents.collect { event ->
-            followingSnackbar = when (event) {
-                FeedListViewModel.LikeEvent.LoginRequired -> loginRequiredMsg
-                is FeedListViewModel.LikeEvent.Failed -> actionFailedMsg
-                is FeedListViewModel.LikeEvent.Updated -> null
+            when (event) {
+                FeedListViewModel.LikeEvent.LoginRequired -> followingSnackbar = loginRequiredMsg
+                is FeedListViewModel.LikeEvent.Failed -> followingSnackbar = actionFailedMsg
+                is FeedListViewModel.LikeEvent.Updated -> Unit
             }
         }
     }
@@ -789,10 +789,10 @@ private fun GroupEmbeddedFeedContent(
 
     LaunchedEffect(Unit) {
         feedVm.likeEvents.collect { event ->
-            snackbarMessage = when (event) {
-                FeedListViewModel.LikeEvent.LoginRequired -> loginRequiredMsg
-                is FeedListViewModel.LikeEvent.Failed -> actionFailedMsg
-                is FeedListViewModel.LikeEvent.Updated -> null
+            when (event) {
+                FeedListViewModel.LikeEvent.LoginRequired -> snackbarMessage = loginRequiredMsg
+                is FeedListViewModel.LikeEvent.Failed -> snackbarMessage = actionFailedMsg
+                is FeedListViewModel.LikeEvent.Updated -> Unit
             }
         }
     }

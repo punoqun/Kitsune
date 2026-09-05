@@ -6,10 +6,17 @@ import io.github.drumber.kitsune.data.source.network.feed.PostLikeNetworkDataSou
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkPost
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkPostLike
 import io.github.drumber.kitsune.data.source.network.user.model.NetworkUser
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 class PostInteractionRepository(
-    private val postLikeNetworkDataSource: PostLikeNetworkDataSource
+    private val postLikeNetworkDataSource: PostLikeNetworkDataSource,
+    private val userRepository: UserRepository
 ) {
+
+    private val mutationMutexes = Array(MUTATION_LOCK_COUNT) { Mutex() }
 
     /** Returns the id of the current user's like on the given post, or null if not liked. */
     suspend fun getMyPostLikeId(postId: String, userId: String): String? {
@@ -70,6 +77,34 @@ class PostInteractionRepository(
     /** Removes the like with the given id from a post. */
     suspend fun unlikePost(likeId: String) {
         postLikeNetworkDataSource.deletePostLike(likeId)
+    }
+
+    /**
+     * Applies a desired like state serially across all screens. Once started, the network mutation
+     * finishes even if the originating screen leaves, keeping optimistic shared state consistent.
+     */
+    suspend fun setPostLiked(postId: String, userId: String, isLiked: Boolean) {
+        val key = "$userId:$postId"
+        withContext(NonCancellable) {
+            val mutex = mutationMutexes[Math.floorMod(key.hashCode(), MUTATION_LOCK_COUNT)]
+            mutex.withLock {
+                if (userRepository.localUser.value?.id != userId) {
+                    throw kotlinx.coroutines.CancellationException("Authenticated user changed")
+                }
+                val existingLikeId = getMyPostLikeId(postId, userId)
+                if (isLiked && existingLikeId == null) {
+                    checkNotNull(likePost(postId, userId)) {
+                        "Like request returned no created resource"
+                    }
+                } else if (!isLiked && existingLikeId != null) {
+                    unlikePost(existingLikeId)
+                }
+            }
+        }
+    }
+
+    companion object {
+        private const val MUTATION_LOCK_COUNT = 64
     }
 
 }

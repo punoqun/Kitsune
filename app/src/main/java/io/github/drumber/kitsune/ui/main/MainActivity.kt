@@ -24,6 +24,9 @@ import io.github.drumber.kitsune.config.IntentAction.OPEN_MEDIA
 import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_LIBRARY
 import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_SEARCH
 import io.github.drumber.kitsune.config.IntentAction.SHORTCUT_SETTINGS
+import io.github.drumber.kitsune.data.repository.ContentRevealStore
+import io.github.drumber.kitsune.data.repository.NotificationRepository
+import io.github.drumber.kitsune.data.repository.PostInteractionStore
 import io.github.drumber.kitsune.domain.work.UpdateLibraryWidgetUseCase
 import io.github.drumber.kitsune.preference.KitsunePref
 import io.github.drumber.kitsune.preference.StartPagePref
@@ -47,6 +50,9 @@ class MainActivity : BaseActivity() {
     private val viewModel: MainActivityViewModel by viewModel()
 
     private val updateLibraryWidget by inject<UpdateLibraryWidgetUseCase>()
+    private val postInteractionStore by inject<PostInteractionStore>()
+    private val contentRevealStore by inject<ContentRevealStore>()
+    private val notificationRepository by inject<NotificationRepository>()
 
     private var navController: NavHostController? = null
 
@@ -61,6 +67,13 @@ class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (intent.getBooleanExtra(EXTRA_CLEAR_USER_STATE, false)) {
+            intent.removeExtra(EXTRA_CLEAR_USER_STATE)
+            postInteractionStore.clear()
+            contentRevealStore.clear()
+            notificationRepository.clearUserState()
+        }
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.reLoginPrompt.collectLatest { promptUserReLogin() }
@@ -73,7 +86,7 @@ class MainActivity : BaseActivity() {
                 viewModel.isLoggedInFlow.collectLatest { isLoggedIn ->
                     if (initialLoginState != isLoggedIn) {
                         updateLibraryWidget(this@MainActivity)
-                        startNewMainActivity()
+                        startNewMainActivity(showReLogin = viewModel.isReLoginRequired())
                     }
                 }
             }
@@ -168,6 +181,10 @@ class MainActivity : BaseActivity() {
      * `null` means staying on Home.
      */
     private fun resolveInitialRoute(): Any? {
+        if (intent.getBooleanExtra(EXTRA_SHOW_RE_LOGIN, false)) {
+            viewModel.consumeReLoginRequirement()
+            return Routes.Login(wasLoggedOut = true)
+        }
         if (isLaunchedByDeepLink()) return null
 
         shortcutStartDestination()?.let { return it }
@@ -267,9 +284,11 @@ class MainActivity : BaseActivity() {
         navController?.navigateSafe(Routes.Login(wasLoggedOut = true))
     }
 
-    private fun startNewMainActivity() {
+    private fun startNewMainActivity(showReLogin: Boolean) {
         val intent = Intent(this, MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra(EXTRA_CLEAR_USER_STATE, true)
+            .putExtra(EXTRA_SHOW_RE_LOGIN, showReLogin)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
 
@@ -295,5 +314,7 @@ class MainActivity : BaseActivity() {
         /** Extras used by the library widget to open a media details screen. */
         const val EXTRA_MEDIA_ID = "mediaId"
         const val EXTRA_MEDIA_IS_ANIME = "isAnime"
+        private const val EXTRA_CLEAR_USER_STATE = "clearUserState"
+        private const val EXTRA_SHOW_RE_LOGIN = "showReLogin"
     }
 }

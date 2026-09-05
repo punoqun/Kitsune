@@ -479,12 +479,12 @@ private fun ProfileFeedTab(
 
     LaunchedEffect(commentLoginRequiredMessage, commentActionFailedMessage) {
         feedViewModel.likeEvents.collect { event ->
-            snackbarMessage = when (event) {
+            when (event) {
                 FeedListViewModel.LikeEvent.LoginRequired ->
-                    commentLoginRequiredMessage
+                    snackbarMessage = commentLoginRequiredMessage
                 is FeedListViewModel.LikeEvent.Failed ->
-                    commentActionFailedMessage
-                is FeedListViewModel.LikeEvent.Updated -> null
+                    snackbarMessage = commentActionFailedMessage
+                is FeedListViewModel.LikeEvent.Updated -> Unit
             }
         }
     }
@@ -813,6 +813,11 @@ private fun WebViewDestination(
         getAccessToken = accessTokenRepository::getAccessToken,
         onNavigateUp = { navController.navigateUp() },
         onWebViewReady = { wv -> webViewHolder.value = wv },
+        onWebViewRelease = { webView ->
+            Bundle().also { state -> webView.saveState(state) }
+                .also { state -> savedStateHandle[WEB_VIEW_STATE_HANDLE_KEY] = state }
+            if (webViewHolder.value === webView) webViewHolder.value = null
+        },
         openUrl = { u ->
             try {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u)))
