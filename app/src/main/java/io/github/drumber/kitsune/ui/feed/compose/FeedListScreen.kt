@@ -40,7 +40,6 @@ import io.github.drumber.kitsune.data.repository.PostInteractionStore
 import io.github.drumber.kitsune.ui.component.compose.list.KitsunePullToRefreshBox
 import io.github.drumber.kitsune.ui.component.compose.list.PagingEmptyContent
 import io.github.drumber.kitsune.ui.component.compose.list.PagingErrorContent
-import io.github.drumber.kitsune.ui.component.compose.list.PagingLoadingContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -165,7 +164,7 @@ private fun FeedPostColumn(
 
     when {
         refreshState is LoadState.Loading && effectiveCount == 0 ->
-            PagingLoadingContent(modifier = Modifier.fillMaxSize())
+            FeedLoadingSkeleton(modifier = Modifier.fillMaxSize())
         refreshState is LoadState.Error && effectiveCount == 0 ->
             PagingErrorContent(modifier = Modifier.fillMaxSize(), onRetry = { posts.retry() })
         refreshState is LoadState.NotLoading &&

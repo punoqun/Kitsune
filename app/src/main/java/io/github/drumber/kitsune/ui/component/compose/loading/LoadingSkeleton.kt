@@ -39,7 +39,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SkeletonBox(
     modifier: Modifier,
-    shape: Shape = RoundedCornerShape(12.dp)
+    shape: Shape = RoundedCornerShape(12.dp),
+    shadowElevation: Dp = 2.dp
 ) {
     val transition = rememberInfiniteTransition(label = "skeletonShimmer")
     val progress by transition.animateFloat(
@@ -58,11 +59,17 @@ fun SkeletonBox(
     Box(
         modifier = modifier
             .clearAndSetSemantics {}
-            .shadow(
-                elevation = 2.dp,
-                shape = shape,
-                ambientColor = shadowColor,
-                spotColor = shadowColor
+            .then(
+                if (shadowElevation > 0.dp) {
+                    Modifier.shadow(
+                        elevation = shadowElevation,
+                        shape = shape,
+                        ambientColor = shadowColor,
+                        spotColor = shadowColor
+                    )
+                } else {
+                    Modifier
+                }
             )
             .clip(shape)
             .drawWithCache {
