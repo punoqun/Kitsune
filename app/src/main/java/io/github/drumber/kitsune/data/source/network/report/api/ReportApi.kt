@@ -18,5 +18,4 @@ interface ReportApi {
     suspend fun postReport(
         @Body report: JSONAPIDocument<NetworkReport>
     ): JSONAPIDocument<NetworkReport>
-
 }

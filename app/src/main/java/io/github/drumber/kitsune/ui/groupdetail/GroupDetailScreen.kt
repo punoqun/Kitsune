@@ -173,10 +173,11 @@ private fun GroupDetailContent(
             GroupAboutTab(group = group, modifier = Modifier.fillMaxSize())
         }
         Box(
-            modifier = if (selectedTab == TAB_POSTS)
+            modifier = if (selectedTab == TAB_POSTS) {
                 Modifier.fillMaxSize()
-            else
+            } else {
                 Modifier.requiredSize(0.dp)
+            }
         ) {
             feedContent()
         }

@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicLong
 
 class NotificationRepository(
     private val notificationNetworkDataSource: NotificationNetworkDataSource,
@@ -33,6 +33,7 @@ class NotificationRepository(
 
     private val notificationFetchMutex = Mutex()
     private val stateGeneration = AtomicLong()
+
     @Volatile
     private var lastNotificationFetch = -1L
 
@@ -49,7 +50,9 @@ class NotificationRepository(
         val userId = userRepository.localUser.value?.id ?: return
         val generation = stateGeneration.get()
 
-        if (lastNotificationFetch == -1L || System.currentTimeMillis() - lastNotificationFetch >= NOTIFICATION_UPDATE_INTERVAL) {
+        val shouldRefresh = lastNotificationFetch == -1L ||
+            System.currentTimeMillis() - lastNotificationFetch >= NOTIFICATION_UPDATE_INTERVAL
+        if (shouldRefresh) {
             try {
                 val count = notificationNetworkDataSource.getUnseenNotificationsCount(userId)
                 if (generation == stateGeneration.get() &&

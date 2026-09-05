@@ -46,6 +46,7 @@ import io.github.drumber.kitsune.data.presentation.model.comment.Comment
 import io.github.drumber.kitsune.data.presentation.model.feed.Post
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.list.PagingErrorContent
 import io.github.drumber.kitsune.ui.component.compose.loading.DetailLoadingSkeleton
 import io.github.drumber.kitsune.ui.component.compose.loading.ListLoadingSkeleton
 import io.github.drumber.kitsune.ui.feed.compose.PostCard
@@ -238,6 +239,13 @@ private fun PostDetailContent(
                     ListLoadingSkeleton(
                         modifier = Modifier.fillMaxWidth(),
                         itemCount = 3
+                    )
+                }
+            refreshState is LoadState.Error && comments.itemCount == 0 ->
+                item {
+                    PagingErrorContent(
+                        modifier = Modifier.fillMaxWidth(),
+                        onRetry = { comments.retry() }
                     )
                 }
             else -> {

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -28,20 +30,31 @@ import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneCollapsingTopAppBar
 import io.github.drumber.kitsune.ui.component.compose.list.KitsunePullToRefreshBox
 import io.github.drumber.kitsune.ui.component.compose.list.PagingColumn
-import io.github.drumber.kitsune.ui.component.compose.media.Avatar
-import io.github.drumber.kitsune.ui.feed.compose.PostContentWarning
+import io.github.drumber.kitsune.data.repository.PostInteractionStore
+import io.github.drumber.kitsune.ui.feed.compose.PostCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaFeedScreen(
     title: String,
     items: LazyPagingItems<Post>,
+    interactionStates: Map<String, PostInteractionStore.State>,
     revealedPosts: Set<String>,
     nsfwAllowed: Boolean,
+    currentUserId: String?,
+    snackbarHostState: SnackbarHostState,
     onNavigateUp: () -> Unit,
     onPostClick: (Post) -> Unit,
+    onLikeClick: (Post, Boolean) -> Unit,
     onRevealClick: (Post) -> Unit,
-    onAuthorClick: (String) -> Unit
+    onMediaClick: (Post) -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
+    onEmbedClick: (String) -> Unit,
+    onEditClick: (Post) -> Unit,
+    onDeleteClick: (Post) -> Unit,
+    onReportClick: (Post) -> Unit,
+    onAuthorClick: (String) -> Unit,
+    onGroupClick: (String) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -52,6 +65,7 @@ fun MediaFeedScreen(
                 scrollBehavior = scrollBehavior
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
         val isRefreshing = items.loadState.refresh is LoadState.Loading && items.itemCount > 0
@@ -69,63 +83,27 @@ fun MediaFeedScreen(
                 key = { it.id }
             ) { item ->
                 if (item != null) {
-                    PostItem(
+                    PostCard(
                         post = item,
+                        interactionState = interactionStates[item.id],
                         isRevealed = item.id in revealedPosts,
                         nsfwAllowed = nsfwAllowed,
-                        onClick = { onPostClick(item) },
-                        onRevealClick = { onRevealClick(item) },
-                        onAuthorClick = onAuthorClick
+                        currentUserId = currentUserId,
+                        truncateContent = true,
+                        canReport = currentUserId != null,
+                        onPostClick = onPostClick,
+                        onLikeClick = onLikeClick,
+                        onRevealClick = onRevealClick,
+                        onMediaClick = onMediaClick,
+                        onImageClick = onImageClick,
+                        onEmbedClick = onEmbedClick,
+                        onEditClick = onEditClick,
+                        onDeleteClick = onDeleteClick,
+                        onReportClick = onReportClick,
+                        onAuthorClick = onAuthorClick,
+                        onGroupClick = onGroupClick
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PostItem(
-    post: Post,
-    isRevealed: Boolean,
-    nsfwAllowed: Boolean,
-    onClick: () -> Unit,
-    onRevealClick: () -> Unit,
-    onAuthorClick: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(
-                imageUrl = post.authorAvatarUrl,
-                size = 36.dp,
-                contentDescription = post.authorName,
-                modifier = Modifier.clickable { post.authorId?.let { onAuthorClick(it) } }
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = post.authorName.orEmpty(),
-                style = MaterialTheme.typography.labelLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Spacer(Modifier.height(6.dp))
-        val gated = (post.spoiler || (post.nsfw && !nsfwAllowed)) && !isRevealed
-        if (gated) {
-            PostContentWarning(post = post, onReveal = onRevealClick)
-        } else {
-            val content = post.content?.takeIf { it.isNotBlank() } ?: post.contentFormatted
-            if (!content.isNullOrBlank()) {
-                Text(
-                    text = content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 5,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
     }

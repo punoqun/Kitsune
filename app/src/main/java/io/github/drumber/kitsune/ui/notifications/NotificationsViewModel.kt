@@ -24,6 +24,7 @@ class NotificationsViewModel(
 
     /** IDs of notifications that were already marked as seen. */
     private val seenNotificationIds = mutableSetOf<String>()
+
     /** Notifications that should be marked as seen after a delay. */
     private val pendingSeenNotifications = mutableSetOf<Notification>()
 

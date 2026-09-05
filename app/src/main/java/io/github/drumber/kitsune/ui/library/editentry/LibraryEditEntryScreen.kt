@@ -272,8 +272,11 @@ private fun LibraryEditMediaHeader(
             val year = entry.media?.publishingYearText(context) ?: ""
             val subtype = entry.media?.subtypeFormatted ?: ""
             Text(
-                text = if (year.isNotBlank() && subtype.isNotBlank()) "$year • $subtype"
-                       else (year + subtype),
+                text = if (year.isNotBlank() && subtype.isNotBlank()) {
+                    "$year • $subtype"
+                } else {
+                    (year + subtype)
+                },
                 style = MaterialTheme.typography.bodyMedium
             )
         }

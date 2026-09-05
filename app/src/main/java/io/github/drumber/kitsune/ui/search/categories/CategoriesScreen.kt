@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package io.github.drumber.kitsune.ui.search.categories
 
 import androidx.compose.animation.core.animateFloatAsState

@@ -59,13 +59,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.algolia.instantsearch.core.connection.ConnectionHandler
 import com.algolia.instantsearch.core.hits.HitsView
 import com.algolia.instantsearch.core.hits.connectHitsView
 import com.algolia.instantsearch.searchbox.connectView
 import com.algolia.search.helper.deserialize
 import com.algolia.search.model.response.ResponseSearch
-import coil3.compose.AsyncImage
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.mapper.AlgoliaMapper.toCharacterSearchResult
 import io.github.drumber.kitsune.data.mapper.CharacterMapper.toCharacter
@@ -613,7 +613,9 @@ private fun CharacterSearchResultItem(
         headlineContent = { Text(character.name.orEmpty()) },
         supportingContent = if (!character.primaryMediaTitle.isNullOrBlank()) {
             { Text(character.primaryMediaTitle) }
-        } else null,
+        } else {
+            null
+        },
         leadingContent = {
             AsyncImage(
                 model = character.image?.originalOrDown()?.fixImageUrl(),

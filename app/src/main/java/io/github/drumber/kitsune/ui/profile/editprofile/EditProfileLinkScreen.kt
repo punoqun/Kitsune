@@ -61,8 +61,11 @@ fun EditProfileLinkScreen(
         ) {
             Text(
                 text = stringResource(
-                    if (isCreatingNew) R.string.action_add_profile_link
-                    else R.string.action_edit_profile_link
+                    if (isCreatingNew) {
+                        R.string.action_add_profile_link
+                    } else {
+                        R.string.action_edit_profile_link
+                    }
                 ),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)

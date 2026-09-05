@@ -147,7 +147,6 @@ fun LibraryScreen(
         modifier = modifier,
         topBar = {
             LibraryTopBar(
-                filterState = uiState.filter,
                 searchActive = searchActive,
                 searchQuery = searchQuery,
                 offlineSyncCount = offlineSyncCount,
@@ -194,7 +193,6 @@ fun LibraryScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryTopBar(
-    filterState: FilterState,
     searchActive: Boolean,
     searchQuery: String,
     offlineSyncCount: Int,
@@ -472,7 +470,6 @@ private fun LibraryEntryCard(
             )
             LibraryEntryCardDetails(
                 entry = entry,
-                onLongClick = onLongClick,
                 onEpisodeWatched = onEpisodeWatched,
                 onEpisodeUnwatched = onEpisodeUnwatched,
                 onRatingClicked = onRatingClicked,
@@ -487,7 +484,6 @@ private fun LibraryEntryCard(
 @Composable
 private fun LibraryEntryCardDetails(
     entry: LibraryEntryWithModification,
-    onLongClick: () -> Unit,
     onEpisodeWatched: () -> Unit,
     onEpisodeUnwatched: () -> Unit,
     onRatingClicked: () -> Unit,

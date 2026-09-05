@@ -42,6 +42,7 @@ class MediaFeedViewModel(
     }
 
     sealed interface ActionEvent {
+        data object LoginRequired : ActionEvent
         data object PostDeleted : ActionEvent
         data object Error : ActionEvent
     }
@@ -59,6 +60,7 @@ class MediaFeedViewModel(
                 LocalSfwFilterPreference.NSFW_EVERYWHERE
 
     val revealedPosts = contentRevealStore.revealed
+    val interactionStates = postInteractionStore.states
 
     fun initMediaFeed(mediaId: String, isAnime: Boolean) {
         val key = MediaFeedKey.Media(mediaId, isAnime)
@@ -87,7 +89,11 @@ class MediaFeedViewModel(
     }
 
     fun togglePostLike(post: Post, targetLiked: Boolean) {
-        val userId = getLocalUserId() ?: return
+        val userId = getLocalUserId()
+        if (userId == null) {
+            actionEventChannel.trySend(ActionEvent.LoginRequired)
+            return
+        }
 
         val previousState = postInteractionStore.get(post.id)
         val previousLiked = previousState?.isLiked ?: !targetLiked

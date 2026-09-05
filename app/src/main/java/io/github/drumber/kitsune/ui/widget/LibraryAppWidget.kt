@@ -68,11 +68,9 @@ import io.github.drumber.kitsune.config.IntentAction.OPEN_LIBRARY
 import io.github.drumber.kitsune.config.IntentAction.OPEN_MEDIA
 import io.github.drumber.kitsune.config.LibraryWidget
 import io.github.drumber.kitsune.data.common.media.MediaType
-import io.github.drumber.kitsune.data.presentation.dto.toMediaDto
 import io.github.drumber.kitsune.data.presentation.model.library.LibraryEntry
 import io.github.drumber.kitsune.data.presentation.model.library.LibraryEntryWithModification
 import io.github.drumber.kitsune.data.presentation.model.library.LibraryStatus
-import io.github.drumber.kitsune.data.presentation.model.media.identifier
 import io.github.drumber.kitsune.data.repository.AccessTokenRepository
 import io.github.drumber.kitsune.data.repository.AccessTokenRepository.AccessTokenState
 import io.github.drumber.kitsune.data.repository.LibraryRepository

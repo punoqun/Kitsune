@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package io.github.drumber.kitsune.ui.navigation
 
 import androidx.compose.runtime.Composable

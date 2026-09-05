@@ -97,9 +97,11 @@ class PostDetailViewModel(
      * Fetches a post by its id and calls [setPost] once the result is available. Used by the
      * Compose navigation graph, which passes only the id as a route argument.
      */
-    fun initFromPostId(postId: String) {
-        if (post.value?.id == postId && _postLoadState.value == PostLoadState.Loaded) return
-        postManagementRepository.getCachedPost(postId)?.let { cachedPost ->
+    fun initFromPostId(postId: String, forceRefresh: Boolean = false) {
+        if (!forceRefresh && post.value?.id == postId &&
+            _postLoadState.value == PostLoadState.Loaded
+        ) return
+        if (!forceRefresh) postManagementRepository.getCachedPost(postId)?.let { cachedPost ->
             setPost(cachedPost)
             return
         }
@@ -134,7 +136,8 @@ class PostDetailViewModel(
         }
         // Some entry points (e.g. notifications) only carry a partial post without images,
         // media or embed. Re-fetch the full post so the detail screen renders completely.
-        if (fetchFullPost) viewModelScope.launch {
+        if (fetchFullPost) {
+            viewModelScope.launch {
             try {
                 postManagementRepository.getPost(newPost.id)?.let { fullPost ->
                     post.update { fullPost }
@@ -143,6 +146,7 @@ class PostDetailViewModel(
             } catch (e: Exception) {
                 logE("Failed to fetch full post '${newPost.id}'.", e)
             }
+        }
         }
         val userId = getLocalUserId() ?: return
         if (cachedInteraction?.isLiked == false) return
@@ -395,5 +399,4 @@ class PostDetailViewModel(
             }
         }
     }
-
 }

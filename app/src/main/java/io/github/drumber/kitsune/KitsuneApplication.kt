@@ -78,7 +78,7 @@ class KitsuneApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         get()
 
-    private fun enableStrictMode() {        StrictMode.setThreadPolicy(
+    private fun enableStrictMode() { StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
                 .detectAll()
                 .penaltyLog()
@@ -101,10 +101,11 @@ class KitsuneApplication : Application(), SingletonImageLoader.Factory {
             if (databaseFile.isFile) {
                 try {
                     val isDeleted = databaseFile.delete()
-                    if (isDeleted)
+                    if (isDeleted) {
                         logI("[Migration-1.8.0] Deleted database file '${databaseFile.absolutePath}'.")
-                    else
+                    } else {
                         logW("[Migration-1.8.0] Failed to delete database file '${databaseFile.absolutePath}'.")
+                    }
                 } catch (e: Exception) {
                     logE(
                         "[Migration-1.8.0] Error while deleting database file '${databaseFile.absolutePath}'.",

@@ -36,11 +36,13 @@ import io.github.drumber.kitsune.util.logW
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -87,6 +89,9 @@ class DetailsViewModel(
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean>
         get() = _isLoading
+
+    private val loadErrorChannel = Channel<Unit>(Channel.BUFFERED)
+    val loadErrors: Flow<Unit> = loadErrorChannel.receiveAsFlow()
 
     private val acceptInternalAction: (InternalAction) -> Unit
 
@@ -155,6 +160,7 @@ class DetailsViewModel(
 
             if (media.isNullOrEmpty()) {
                 logW("No media for slug '$slug' found.")
+                loadErrorChannel.send(Unit)
                 return@launch
             }
 

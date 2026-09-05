@@ -108,7 +108,7 @@ class CreatePostViewModel(
         viewModelScope.launch {
             try {
                 val post = postManagementRepository.getPost(postId)
-                    ?: throw IllegalStateException("Post was not found.")
+                    ?: error("Post was not found.")
                 applyLoadedPost(post)
             } catch (e: CancellationException) {
                 throw e

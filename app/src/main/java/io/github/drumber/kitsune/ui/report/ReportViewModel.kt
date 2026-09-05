@@ -87,9 +87,9 @@ class ReportViewModel(
         }
     }
 
-    private fun UiState.canSubmit() = state == ReportState.NotReported
-            && selectedReason != null
-            && (!explanation.isNullOrBlank() || selectedReason != ReportReason.OTHER)
+    private fun UiState.canSubmit() = state == ReportState.NotReported &&
+            selectedReason != null &&
+            (!explanation.isNullOrBlank() || selectedReason != ReportReason.OTHER)
 
     data class UiState(
         val state: ReportState,

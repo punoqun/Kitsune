@@ -1,6 +1,5 @@
 package io.github.drumber.kitsune.ui.navigation.graph
 
-import android.content.Intent
 import android.net.Uri
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -52,8 +51,8 @@ import io.github.drumber.kitsune.ui.createpost.MediaPickerViewModel
 import io.github.drumber.kitsune.ui.createpost.UnitPickerScreen
 import io.github.drumber.kitsune.ui.createpost.UnitPickerViewModel
 import io.github.drumber.kitsune.ui.feed.FeedListViewModel
-import io.github.drumber.kitsune.ui.feed.FeedViewModel
 import io.github.drumber.kitsune.ui.feed.FeedType
+import io.github.drumber.kitsune.ui.feed.FeedViewModel
 import io.github.drumber.kitsune.ui.feed.compose.FeedListScreen
 import io.github.drumber.kitsune.ui.feed.compose.FeedScreen
 import io.github.drumber.kitsune.ui.groupdetail.GroupDetailScreen
@@ -227,8 +226,11 @@ private fun FeedDestination(backStackEntry: NavBackStackEntry, navController: Na
         onCreatePost = { navController.navigateSafe(Routes.CreatePost()) },
         onPostClick = { post -> navController.navigateSafe(Routes.PostDetail(post.id)) },
         onLikeClick = { post, targetLiked, page ->
-            if (page == 0) globalVm.togglePostLike(post, targetLiked)
-            else followingVm.togglePostLike(post, targetLiked)
+            if (page == 0) {
+                globalVm.togglePostLike(post, targetLiked)
+            } else {
+                followingVm.togglePostLike(post, targetLiked)
+            }
         },
         onRevealClick = { post, page ->
             if (page == 0) globalVm.revealPost(post) else followingVm.revealPost(post)
@@ -345,6 +347,7 @@ private fun PostDetailDestination(
     }
 
     backStackEntry.NavResultEffect<Boolean>(NavResults.POST_CREATED) {
+        viewModel.initFromPostId(route.postId, forceRefresh = true)
         comments.refresh()
     }
 
@@ -899,11 +902,14 @@ private fun CreatePostDestination(
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
         coroutineScope.launch {
             var failed = false
-            for (uri in uris) {
-                if (viewModel.uiState.value.images.size >= CreatePostViewModel.MAX_IMAGES) break
+            val remainingSlots = CreatePostViewModel.MAX_IMAGES - viewModel.uiState.value.images.size
+            for (uri in uris.take(remainingSlots)) {
                 val dataUri = encodeImageToBase64(context, uri)
-                if (dataUri == null) { failed = true; continue }
-                viewModel.addImage(uri.toString(), dataUri)
+                if (dataUri == null) {
+                    failed = true
+                } else {
+                    viewModel.addImage(uri.toString(), dataUri)
+                }
             }
             if (failed) imageEncodingFailed = true
         }
@@ -915,11 +921,14 @@ private fun CreatePostDestination(
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
         coroutineScope.launch {
             var failed = false
-            for (uri in uris) {
-                if (viewModel.uiState.value.images.size >= CreatePostViewModel.MAX_IMAGES) break
+            val remainingSlots = CreatePostViewModel.MAX_IMAGES - viewModel.uiState.value.images.size
+            for (uri in uris.take(remainingSlots)) {
                 val dataUri = encodeImageToBase64(context, uri)
-                if (dataUri == null) { failed = true; continue }
-                viewModel.addImage(uri.toString(), dataUri)
+                if (dataUri == null) {
+                    failed = true
+                } else {
+                    viewModel.addImage(uri.toString(), dataUri)
+                }
             }
             if (failed) imageEncodingFailed = true
         }

@@ -54,6 +54,8 @@ import io.github.drumber.kitsune.data.presentation.model.library.LibraryEntryWit
 import io.github.drumber.kitsune.data.presentation.model.library.getStringResId
 import io.github.drumber.kitsune.data.presentation.model.media.Anime
 import io.github.drumber.kitsune.data.presentation.model.media.Media
+import io.github.drumber.kitsune.data.presentation.model.media.Manga
+import io.github.drumber.kitsune.data.presentation.model.media.production.AnimeProductionRole
 import io.github.drumber.kitsune.data.presentation.model.media.category.Category
 import io.github.drumber.kitsune.data.presentation.model.media.relationship.MediaRelationship
 import io.github.drumber.kitsune.data.presentation.model.reaction.MediaReaction
@@ -302,13 +304,14 @@ private fun DetailsContent(
                     .padding(bottom = 24.dp)
             )
         }
+        MediaMetadataSection(media = media, onOpenTrailer = onOpenStreamingLink)
         NavigationButtonsSection(
             media = media,
             onNavigateToEpisodes = onNavigateToEpisodes,
             onNavigateToCharacters = onNavigateToCharacters,
             onNavigateToFeed = onNavigateToFeed
         )
-        if (reactions.isNotEmpty()) {
+        if (media != null) {
             ReactionsSection(
                 reactions = reactions,
                 onReactionClick = onNavigateToReaction,
@@ -398,6 +401,93 @@ private fun CategoryChipsRow(categories: List<Category>, onCategoryClick: (Categ
                 label = { Text(category.title.orEmpty(), maxLines = 1) }
             )
         }
+    }
+}
+
+@Composable
+private fun MediaMetadataSection(media: Media?, onOpenTrailer: (String) -> Unit) {
+    if (media == null) return
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val alternateTitles = listOfNotNull(
+        media.titleEn,
+        media.titleEnJp,
+        media.titleJaJp,
+        media.abbreviatedTitlesFormatted
+    ).filter { it.isNotBlank() }.distinct().joinToString(" · ")
+
+    Text(
+        text = stringResource(R.string.title_information),
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+    InfoRow(stringResource(R.string.title_alternate_titles), alternateTitles)
+    InfoRow(stringResource(R.string.data_status), stringResource(media.statusStringRes))
+    InfoRow(stringResource(R.string.data_aired), media.airedText)
+    InfoRow(stringResource(R.string.data_age_rating), media.ageRatingText)
+    InfoRow(stringResource(R.string.title_media_type), media.subtypeFormatted)
+    InfoRow(stringResource(R.string.data_length), media.lengthText(context))
+    when (media) {
+        is Anime -> {
+            InfoRow(stringResource(R.string.data_episodes), media.episodes)
+            InfoRow(
+                stringResource(R.string.data_studios),
+                media.getProducer(AnimeProductionRole.Studio)
+            )
+            InfoRow(
+                stringResource(R.string.data_producers),
+                media.getProducer(AnimeProductionRole.Producer)
+            )
+            InfoRow(
+                stringResource(R.string.data_licensors),
+                media.getProducer(AnimeProductionRole.Licensor)
+            )
+        }
+        is Manga -> {
+            InfoRow(stringResource(R.string.data_chapters), media.chapters)
+            InfoRow(stringResource(R.string.data_volumes), media.volumes)
+            InfoRow(stringResource(R.string.data_serialization), media.serializationText)
+        }
+    }
+
+    Text(
+        text = stringResource(R.string.title_statistics),
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+    )
+    InfoRow(stringResource(R.string.data_average_rating), media.avgRatingFormatted)
+    InfoRow(stringResource(R.string.data_users), media.userCount?.toString())
+    InfoRow(stringResource(R.string.data_favorites), media.favoritesCount?.toString())
+    InfoRow(stringResource(R.string.data_popularity_rank), media.popularityRank?.toString())
+    InfoRow(stringResource(R.string.data_rating_rank), media.ratingRank?.toString())
+
+    media.trailerUrl?.let { trailerUrl ->
+        OutlinedButton(
+            onClick = { onOpenTrailer(trailerUrl) },
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+        ) {
+            Text(stringResource(R.string.title_trailer))
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+}
+
+@Composable
+private fun InfoRow(label: String, value: String?) {
+    if (value.isNullOrBlank()) return
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.weight(0.4f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(0.6f)
+        )
     }
 }
 

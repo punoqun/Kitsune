@@ -25,14 +25,19 @@ data class NetworkReport(
 enum class NetworkReportReason {
     @JsonProperty("nsfw")
     NSFW,
+
     @JsonProperty("offensive")
     OFFENSIVE,
+
     @JsonProperty("spoiler")
     SPOILER,
+
     @JsonProperty("bullying")
     BULLYING,
+
     @JsonProperty("other")
     OTHER,
+
     @JsonProperty("spam")
     SPAM
 }
@@ -40,8 +45,10 @@ enum class NetworkReportReason {
 enum class NetworkReportStatus {
     @JsonProperty("reported")
     REPORTED,
+
     @JsonProperty("resolved")
     RESOLVED,
+
     @JsonProperty("declined")
     DECLINED
 }

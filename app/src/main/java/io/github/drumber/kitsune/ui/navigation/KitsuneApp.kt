@@ -37,9 +37,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.drumber.kitsune.R
-import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.ui.component.compose.NavigationBarIconAppearance
 import io.github.drumber.kitsune.ui.component.compose.StatusBarIconAppearance
+import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

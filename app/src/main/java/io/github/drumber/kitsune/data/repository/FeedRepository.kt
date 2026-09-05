@@ -13,8 +13,8 @@ import io.github.drumber.kitsune.data.source.network.feed.FeedNetworkDataSource
 import io.github.drumber.kitsune.data.source.network.feed.FeedPagingDataSource
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkActivityGroup
 import io.github.drumber.kitsune.data.source.network.feed.model.NetworkPost
-import io.github.drumber.kitsune.util.logE
 import io.github.drumber.kitsune.util.image.PostImagePreloader
+import io.github.drumber.kitsune.util.logE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.map
@@ -186,5 +186,4 @@ class FeedRepository(
         .fields("users", "avatar", "name", "slug", "title")
         .pageLimit(pageSize)
         .apply { cursor?.let { pageCursor(it) } }
-
 }

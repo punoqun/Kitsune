@@ -358,7 +358,8 @@ private fun ProfileTopBar(
                     }
                 }
                 // Overflow menu (share + logout).
-                if (user != null) Box {
+                if (user != null) {
+                    Box {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
@@ -382,6 +383,7 @@ private fun ProfileTopBar(
                             )
                         }
                     }
+                }
                 }
             },
             colors = TopAppBarDefaults.largeTopAppBarColors(

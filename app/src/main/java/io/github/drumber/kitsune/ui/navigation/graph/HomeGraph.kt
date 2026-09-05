@@ -1,27 +1,26 @@
 package io.github.drumber.kitsune.ui.navigation.graph
 
-import android.content.Intent
 import android.net.ConnectivityManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -33,20 +32,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.navDeepLink
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.algolia.instantsearch.core.connection.AbstractConnection
@@ -65,21 +64,22 @@ import io.github.drumber.kitsune.data.presentation.model.media.Media
 import io.github.drumber.kitsune.data.presentation.model.media.MediaSelector
 import io.github.drumber.kitsune.data.presentation.model.media.RequestType
 import io.github.drumber.kitsune.preference.KitsunePref
+import io.github.drumber.kitsune.ui.component.algolia.range.connectView
 import io.github.drumber.kitsune.ui.compose.collectAsStateWithLifecycle
 import io.github.drumber.kitsune.ui.library.LibraryScreen
 import io.github.drumber.kitsune.ui.library.LibraryViewModel
 import io.github.drumber.kitsune.ui.library.RatingScreen
 import io.github.drumber.kitsune.ui.library.editentry.LibraryEditEntryScreen
 import io.github.drumber.kitsune.ui.library.editentry.LibraryEditEntryViewModel
-import io.github.drumber.kitsune.ui.main.HomeExploreSectionUiState
 import io.github.drumber.kitsune.ui.main.HomeExploreScreen
+import io.github.drumber.kitsune.ui.main.HomeExploreSectionUiState
 import io.github.drumber.kitsune.ui.main.MainFragmentViewModel
 import io.github.drumber.kitsune.ui.main.MainScreen
 import io.github.drumber.kitsune.ui.medialist.MediaListScreen
 import io.github.drumber.kitsune.ui.medialist.MediaListViewModel
+import io.github.drumber.kitsune.ui.navigation.LocalReselectEvents
 import io.github.drumber.kitsune.ui.navigation.NavResultEffect
 import io.github.drumber.kitsune.ui.navigation.NavResults
-import io.github.drumber.kitsune.ui.navigation.LocalReselectEvents
 import io.github.drumber.kitsune.ui.navigation.Routes
 import io.github.drumber.kitsune.ui.navigation.navigateSafe
 import io.github.drumber.kitsune.ui.navigation.setNavResult
@@ -94,7 +94,6 @@ import io.github.drumber.kitsune.ui.search.categories.rememberCategoryRows
 import io.github.drumber.kitsune.ui.search.filter.FacetListViewState
 import io.github.drumber.kitsune.ui.search.filter.FacetScreen
 import io.github.drumber.kitsune.ui.search.filter.NumberRangeViewState
-import io.github.drumber.kitsune.ui.component.algolia.range.connectView
 import io.github.drumber.kitsune.util.DATE_FORMAT_ISO
 import io.github.drumber.kitsune.util.formatDate
 import io.github.drumber.kitsune.util.network.ResponseData
@@ -103,7 +102,6 @@ import io.github.drumber.kitsune.util.rating.RatingSystemUtil
 import io.github.drumber.kitsune.util.stripTimeUtcMillis
 import io.github.drumber.kitsune.util.toDate
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import org.koin.androidx.compose.koinViewModel
 import java.lang.ref.WeakReference
 import java.util.Calendar
@@ -216,10 +214,14 @@ private fun AnimeExploreContent(viewModel: MainFragmentViewModel, navController:
     val mostPopularState by (viewModel.getAnimeExploreLiveData(MainFragmentViewModel.MOST_POPULAR)
             as androidx.lifecycle.LiveData<ResponseData<List<Media>>>).collectAsStateWithLifecycle()
 
-    val topAiringSelector = MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_TOP_AIRING_ANIME.options, RequestType.ALL)
-    val topUpcomingSelector = MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_TOP_UPCOMING_ANIME.options, RequestType.ALL)
-    val highestRatedSelector = MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_HIGHEST_RATED_ANIME.options, RequestType.ALL)
-    val mostPopularSelector = MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_MOST_POPULAR_ANIME.options, RequestType.ALL)
+    val topAiringSelector =
+        MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_TOP_AIRING_ANIME.options, RequestType.ALL)
+    val topUpcomingSelector =
+        MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_TOP_UPCOMING_ANIME.options, RequestType.ALL)
+    val highestRatedSelector =
+        MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_HIGHEST_RATED_ANIME.options, RequestType.ALL)
+    val mostPopularSelector =
+        MediaSelector(MediaType.Anime, MainFragmentViewModel.FILTER_MOST_POPULAR_ANIME.options, RequestType.ALL)
 
     HomeExploreScreen(
         sections = listOf(
@@ -269,10 +271,14 @@ private fun MangaExploreContent(viewModel: MainFragmentViewModel, navController:
     val mostPopularState by (viewModel.getMangaExploreLiveData(MainFragmentViewModel.MOST_POPULAR)
             as androidx.lifecycle.LiveData<ResponseData<List<Media>>>).collectAsStateWithLifecycle()
 
-    val topAiringSelector = MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_TOP_AIRING_MANGA.options, RequestType.ALL)
-    val topUpcomingSelector = MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_TOP_UPCOMING_MANGA.options, RequestType.ALL)
-    val highestRatedSelector = MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_HIGHEST_RATED_MANGA.options, RequestType.ALL)
-    val mostPopularSelector = MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_MOST_POPULAR_MANGA.options, RequestType.ALL)
+    val topAiringSelector =
+        MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_TOP_AIRING_MANGA.options, RequestType.ALL)
+    val topUpcomingSelector =
+        MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_TOP_UPCOMING_MANGA.options, RequestType.ALL)
+    val highestRatedSelector =
+        MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_HIGHEST_RATED_MANGA.options, RequestType.ALL)
+    val mostPopularSelector =
+        MediaSelector(MediaType.Manga, MainFragmentViewModel.FILTER_MOST_POPULAR_MANGA.options, RequestType.ALL)
 
     HomeExploreScreen(
         sections = listOf(
@@ -725,7 +731,8 @@ private fun libraryChangeSnackbarMessage(
             is io.github.drumber.kitsune.domain.library.LibraryEntryUpdateResult.Success -> null
             is io.github.drumber.kitsune.domain.library.LibraryEntryUpdateResult.Failure ->
                 when (r.reason) {
-                    is io.github.drumber.kitsune.domain.library.LibraryEntryUpdateFailureReason.NotFound -> errorUpdateNotFound
+                    is io.github.drumber.kitsune.domain.library.LibraryEntryUpdateFailureReason.NotFound ->
+                        errorUpdateNotFound
                     else -> errorUpdateFailed
                 }
         }

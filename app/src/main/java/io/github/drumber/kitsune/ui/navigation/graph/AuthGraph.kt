@@ -1,5 +1,7 @@
 package io.github.drumber.kitsune.ui.navigation.graph
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import io.github.drumber.kitsune.R
+import io.github.drumber.kitsune.config.Kitsu
 import io.github.drumber.kitsune.ui.authentication.LoginScreen
 import io.github.drumber.kitsune.ui.authentication.LoginViewModel
 import io.github.drumber.kitsune.ui.navigation.Routes
@@ -59,6 +62,9 @@ fun LoginDestination(
         onUsernameChange = viewModel::setUsername,
         onPasswordChange = viewModel::setPassword,
         onLogin = viewModel::login,
+        onCreateAccount = {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Kitsu.BASE_URL)))
+        },
         onNavigateUp = onFinished
     )
 }

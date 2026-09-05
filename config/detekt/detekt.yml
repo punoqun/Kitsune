@@ -25,9 +25,15 @@ complexity:
   LongMethod:
     active: true
     threshold: 80
+    ignoreAnnotated:
+      - 'Composable'
+      - 'androidx.compose.runtime.Composable'
   CyclomaticComplexMethod:
     active: true
     threshold: 20
+    ignoreAnnotated:
+      - 'Composable'
+      - 'androidx.compose.runtime.Composable'
   NestedBlockDepth:
     active: true
     threshold: 6

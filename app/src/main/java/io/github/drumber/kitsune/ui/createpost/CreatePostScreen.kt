@@ -81,10 +81,7 @@ fun CreatePostScreen(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     val loginRequiredMsg = stringResource(R.string.comment_login_required)
-    val publishedMsg = stringResource(R.string.post_published)
-    val updatedMsg = stringResource(R.string.post_updated)
     val errorMsg = stringResource(R.string.comment_action_failed)
-    val isEditMode by rememberUpdatedState(uiState.isEditMode)
 
     LaunchedEffect(Unit) {
         events.collect { event ->
@@ -93,8 +90,6 @@ fun CreatePostScreen(
                     snackbarHostState.showSnackbar(loginRequiredMsg)
 
                 CreatePostViewModel.Event.Published -> {
-                    val msg = if (isEditMode) updatedMsg else publishedMsg
-                    snackbarHostState.showSnackbar(msg)
                     onPublished()
                 }
 

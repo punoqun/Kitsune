@@ -121,7 +121,10 @@ class KitsuHtmlToMarkdownConverterTest {
     @Test
     fun `kitsu autoembed linked image collapses to a single image`() {
         val markdown = KitsuHtmlToMarkdownConverter.convert(
-            """<p><a href="https://kitsu.app/image.png"><img class="autoembed" src="https://kitsu.app/image.png" style="max-width:100%" /></a></p>"""
+            """
+            <p><a href="https://kitsu.app/image.png"><img class="autoembed"
+            src="https://kitsu.app/image.png" style="max-width:100%" /></a></p>
+            """.trimIndent()
         )
 
         assertThat(markdown).isEqualTo("![](https://kitsu.app/image.png)")

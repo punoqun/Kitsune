@@ -53,6 +53,7 @@ import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.data.presentation.model.comment.Comment
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneBackButton
 import io.github.drumber.kitsune.ui.component.compose.list.KitsuneTopAppBar
+import io.github.drumber.kitsune.ui.component.compose.list.PagingErrorContent
 import io.github.drumber.kitsune.ui.component.compose.media.Avatar
 import io.github.drumber.kitsune.ui.postdetail.compose.CommentCard
 import io.github.drumber.kitsune.ui.postdetail.compose.CommentContent
@@ -162,6 +163,7 @@ private fun RepliesContent(
     onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val refreshState = replies.loadState.refresh
     val appendState = replies.loadState.append
     LazyColumn(modifier = modifier) {
         if (parentComment != null) {
@@ -183,6 +185,14 @@ private fun RepliesContent(
                     text = stringResource(R.string.title_replies),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+        }
+        if (refreshState is LoadState.Error && replies.itemCount == 0) {
+            item {
+                PagingErrorContent(
+                    modifier = Modifier.fillMaxWidth(),
+                    onRetry = { replies.retry() }
                 )
             }
         }

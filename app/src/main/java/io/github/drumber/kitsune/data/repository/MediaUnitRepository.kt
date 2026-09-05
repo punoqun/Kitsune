@@ -4,12 +4,12 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.map
 import io.github.drumber.kitsune.config.Repository
+import io.github.drumber.kitsune.data.common.Filter
 import io.github.drumber.kitsune.data.mapper.MediaUnitMapper.toMediaUnit
 import io.github.drumber.kitsune.data.source.network.media.ChapterNetworkDataSource
 import io.github.drumber.kitsune.data.source.network.media.ChapterPagingDataSource
 import io.github.drumber.kitsune.data.source.network.media.EpisodeNetworkDataSource
 import io.github.drumber.kitsune.data.source.network.media.EpisodePagingDataSource
-import io.github.drumber.kitsune.data.common.Filter
 import kotlinx.coroutines.flow.map
 
 class MediaUnitRepository(

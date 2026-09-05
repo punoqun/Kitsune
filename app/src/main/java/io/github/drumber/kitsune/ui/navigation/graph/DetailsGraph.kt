@@ -2,6 +2,7 @@ package io.github.drumber.kitsune.ui.navigation.graph
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,8 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.drumber.kitsune.R
@@ -54,20 +57,18 @@ import io.github.drumber.kitsune.ui.details.feed.MediaFeedScreen
 import io.github.drumber.kitsune.ui.details.feed.MediaFeedViewModel
 import io.github.drumber.kitsune.ui.details.reactions.ReactionsScreen
 import io.github.drumber.kitsune.ui.details.reactions.ReactionsViewModel
-import io.github.drumber.kitsune.ui.navigation.Routes
 import io.github.drumber.kitsune.ui.navigation.NavResultEffect
 import io.github.drumber.kitsune.ui.navigation.NavResults
+import io.github.drumber.kitsune.ui.navigation.Routes
 import io.github.drumber.kitsune.ui.navigation.navigateSafe
 import io.github.drumber.kitsune.ui.navigation.toMediaListRoute
 import io.github.drumber.kitsune.ui.report.ReportDialog
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.navDeepLink
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
-
     // ── Media Details ──────────────────────────────────────────────────────────
     composable<Routes.Details>(
         deepLinks = listOf(
@@ -88,8 +89,13 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
                         "manga" -> false
                         else -> null
                     }
-                    if (isAnime != null) viewModel.initFromDeepLink(isAnime, route.slug!!)
+                    if (isAnime != null) {
+                        viewModel.initFromDeepLink(isAnime, route.slug!!)
+                    } else {
+                        navController.navigateUp()
+                    }
                 }
+                else -> navController.navigateUp()
             }
         }
 
@@ -114,6 +120,13 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
         val errorSomethingWrongMessage = stringResource(R.string.error_something_wrong)
         val logInRequiredMessage = stringResource(R.string.info_log_in_required)
         val noInformation = stringResource(R.string.no_information)
+
+        LaunchedEffect(Unit) {
+            viewModel.loadErrors.collect {
+                Toast.makeText(context, errorSomethingWrongMessage, Toast.LENGTH_SHORT).show()
+                navController.navigateUp()
+            }
+        }
 
         // Library-change results → snackbar
         LaunchedEffect(
@@ -438,22 +451,76 @@ fun NavGraphBuilder.detailsGraph(navController: NavHostController) {
         }
 
         val items = viewModel.dataSource.collectAsLazyPagingItems()
+        val snackbarHostState = remember { SnackbarHostState() }
+        val loginRequiredMessage = stringResource(R.string.comment_login_required)
+        val actionFailedMessage = stringResource(R.string.comment_action_failed)
+        var reportPostId by remember { mutableStateOf<String?>(null) }
+        val interactionStates by viewModel.interactionStates.collectAsStateWithLifecycle()
         val revealedPosts by viewModel.revealedPosts.collectAsStateWithLifecycle()
+
+        LaunchedEffect(Unit) {
+            viewModel.actionEvents.collect { event ->
+                when (event) {
+                    MediaFeedViewModel.ActionEvent.LoginRequired ->
+                        snackbarHostState.showSnackbar(loginRequiredMessage)
+                    MediaFeedViewModel.ActionEvent.PostDeleted -> items.refresh()
+                    MediaFeedViewModel.ActionEvent.Error ->
+                        snackbarHostState.showSnackbar(actionFailedMessage)
+                }
+            }
+        }
 
         MediaFeedScreen(
             title = stringResource(R.string.title_posts),
             items = items,
+            interactionStates = interactionStates,
             revealedPosts = revealedPosts,
             nsfwAllowed = viewModel.nsfwAllowed,
+            currentUserId = viewModel.localUserId,
+            snackbarHostState = snackbarHostState,
             onNavigateUp = { navController.navigateUp() },
             onPostClick = { post ->
                 navController.navigateSafe(Routes.PostDetail(post.id))
             },
+            onLikeClick = viewModel::togglePostLike,
             onRevealClick = viewModel::revealPost,
+            onMediaClick = { post ->
+                val mediaId = post.mediaId
+                val isAnime = post.mediaIsAnime
+                if (mediaId != null && isAnime != null) {
+                    navController.navigateSafe(Routes.Details(mediaId = mediaId, isAnime = isAnime))
+                }
+            },
+            onImageClick = { urls, index ->
+                navController.navigateSafe(
+                    Routes.PhotoView(
+                        imageUrl = urls[index],
+                        imageUrls = urls,
+                        initialIndex = index
+                    )
+                )
+            },
+            onEmbedClick = { url -> navController.navigateSafe(Routes.WebView(url)) },
+            onEditClick = { post ->
+                navController.navigateSafe(Routes.CreatePost(editPostId = post.id))
+            },
+            onDeleteClick = viewModel::deletePost,
+            onReportClick = { post -> reportPostId = post.id },
             onAuthorClick = { userId ->
                 navController.navigateSafe(Routes.UserProfile(userId))
+            },
+            onGroupClick = { groupId ->
+                navController.navigateSafe(Routes.GroupDetail(groupId))
             }
         )
+
+        reportPostId?.let { postId ->
+            ReportDialog(
+                itemId = postId,
+                target = ReportTarget.POST,
+                onDismiss = { reportPostId = null }
+            )
+        }
     }
 
     // ── Reactions ──────────────────────────────────────────────────────────────

@@ -28,14 +28,14 @@ import com.google.android.material.elevation.SurfaceColors
 import io.github.drumber.kitsune.BuildConfig
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.util.image.PostImagePreloader
+import io.github.drumber.kitsune.util.image.buildKitsuneImageLoader
 import io.github.drumber.kitsune.util.json.AlgoliaFacetValueDeserializer
 import io.github.drumber.kitsune.util.json.AlgoliaNumericValueDeserializer
 import io.github.drumber.kitsune.util.json.IgnoreParcelablePropertyMixin
 import io.github.drumber.kitsune.util.network.AuthenticationInterceptor
 import io.github.drumber.kitsune.util.network.AuthenticationInterceptorImpl
 import io.github.drumber.kitsune.util.network.UserAgentInterceptor
-import io.github.drumber.kitsune.util.image.PostImagePreloader
-import io.github.drumber.kitsune.util.image.buildKitsuneImageLoader
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.Request

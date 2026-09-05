@@ -27,7 +27,7 @@ class ReactionDetailViewModel(
         data object UpdateSuccess : Event
         data object UpdateFailed : Event
         data object DeleteSuccess : Event
-        data object DeleteFailed: Event
+        data object DeleteFailed : Event
     }
 
     private val _reaction = MutableStateFlow<MediaReaction?>(null)

@@ -1,6 +1,7 @@
 package io.github.drumber.kitsune.ui.authentication
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,6 +67,7 @@ fun LoginScreen(
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLogin: () -> Unit,
+    onCreateAccount: () -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -156,8 +158,11 @@ fun LoginScreen(
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
                                 painter = rememberVectorPainter(
-                                    if (passwordVisible) Icons.Filled.VisibilityOff
-                                    else Icons.Filled.Visibility
+                                    if (passwordVisible) {
+                                        Icons.Filled.VisibilityOff
+                                    } else {
+                                        Icons.Filled.Visibility
+                                    }
                                 ),
                                 contentDescription = stringResource(
                                     if (passwordVisible) {
@@ -194,7 +199,8 @@ fun LoginScreen(
                             style = SpanStyle(color = MaterialTheme.colorScheme.primary)
                         )
                     ),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable(onClick = onCreateAccount)
                 )
             }
 

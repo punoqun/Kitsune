@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import io.github.drumber.kitsune.config.KitsuJsonApi
 import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.config.KitsuJsonApi
 import io.github.drumber.kitsune.data.common.Filter
 import io.github.drumber.kitsune.data.common.FilterOptions
 import io.github.drumber.kitsune.data.common.media.MediaType

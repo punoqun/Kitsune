@@ -300,7 +300,6 @@ class MainActivity : BaseActivity() {
         val intent = Intent(this, OnboardingActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
-        finish()
     }
 
     private fun isLaunchedByDeepLink(): Boolean {

@@ -8,7 +8,6 @@ object KitsuJsonApi {
     val MINIMUM_COLLECTION_FIELDS get() = arrayOf("slug", "titles", "canonicalTitle", "posterImage", "coverImage")
 
     val MINIMUM_CHARACTER_FIELDS get() = arrayOf("slug", "name", "image")
-
 }
 
 enum class SortFilter(val queryParam: String) {
@@ -24,9 +23,9 @@ enum class SortFilter(val queryParam: String) {
 
     companion object {
         fun fromQueryParam(queryParam: String?): SortFilter? {
-            if(queryParam != null) {
+            if (queryParam != null) {
                 entries.forEach {
-                    if(it.queryParam.startsWith(queryParam)) {
+                    if (it.queryParam.startsWith(queryParam)) {
                         return it
                     }
                 }
@@ -34,7 +33,6 @@ enum class SortFilter(val queryParam: String) {
             return null
         }
     }
-
 }
 
 enum class CategorySortFilter(val queryParam: String) {

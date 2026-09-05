@@ -110,12 +110,18 @@ fun ProfileStatsPager(
                 ),
                 isAnime = isAnime,
                 categoryBreakdown = stats.findStatsData(
-                    if (isAnime) UserStatsKind.AnimeCategoryBreakdown
-                    else UserStatsKind.MangaCategoryBreakdown
+                    if (isAnime) {
+                        UserStatsKind.AnimeCategoryBreakdown
+                    } else {
+                        UserStatsKind.MangaCategoryBreakdown
+                    }
                 ),
                 amountConsumed = stats.findStatsData(
-                    if (isAnime) UserStatsKind.AnimeAmountConsumed
-                    else UserStatsKind.MangaAmountConsumed
+                    if (isAnime) {
+                        UserStatsKind.AnimeAmountConsumed
+                    } else {
+                        UserStatsKind.MangaAmountConsumed
+                    }
                 ),
                 isLoading = isLoading
             )

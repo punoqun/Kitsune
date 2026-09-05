@@ -43,10 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.FileProvider
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -58,17 +59,16 @@ import com.google.android.material.color.DynamicColors
 import io.github.drumber.kitsune.BuildConfig
 import io.github.drumber.kitsune.R
 import io.github.drumber.kitsune.config.Kitsu
+import io.github.drumber.kitsune.data.presentation.model.appupdate.UpdateCheckResult
 import io.github.drumber.kitsune.data.presentation.model.character.Character
-import io.github.drumber.kitsune.data.presentation.model.feed.Post
 import io.github.drumber.kitsune.data.presentation.model.media.Anime
 import io.github.drumber.kitsune.data.presentation.model.media.Media
+import io.github.drumber.kitsune.data.presentation.model.user.User
 import io.github.drumber.kitsune.data.presentation.model.user.profilelinks.ProfileLink
 import io.github.drumber.kitsune.data.presentation.model.user.profilelinks.ProfileLinkSite
 import io.github.drumber.kitsune.data.repository.AccessTokenRepository
 import io.github.drumber.kitsune.data.repository.AppUpdateRepository
-import io.github.drumber.kitsune.data.presentation.model.appupdate.UpdateCheckResult
 import io.github.drumber.kitsune.data.repository.FollowListType
-import io.github.drumber.kitsune.data.presentation.model.user.User
 import io.github.drumber.kitsune.data.source.local.user.model.LocalUser
 import io.github.drumber.kitsune.domain.work.UpdateLibraryWidgetUseCase
 import io.github.drumber.kitsune.notification.Notifications
@@ -78,6 +78,8 @@ import io.github.drumber.kitsune.ui.details.characters.CharacterDetailsSheet
 import io.github.drumber.kitsune.ui.feed.FeedListViewModel
 import io.github.drumber.kitsune.ui.feed.compose.FeedListScreen
 import io.github.drumber.kitsune.ui.navigation.LocalReselectEvents
+import io.github.drumber.kitsune.ui.navigation.NavResultEffect
+import io.github.drumber.kitsune.ui.navigation.NavResults
 import io.github.drumber.kitsune.ui.navigation.Routes
 import io.github.drumber.kitsune.ui.navigation.followListType
 import io.github.drumber.kitsune.ui.navigation.navigateSafe
@@ -110,20 +112,19 @@ import io.github.drumber.kitsune.ui.settings.SettingsScreen
 import io.github.drumber.kitsune.ui.settings.SettingsUiState
 import io.github.drumber.kitsune.ui.settings.SettingsViewModel
 import io.github.drumber.kitsune.ui.webview.WebViewScreen
-import androidx.core.content.FileProvider
 import io.github.drumber.kitsune.util.LogCatReader
 import io.github.drumber.kitsune.util.extensions.copyToClipboard
 import io.github.drumber.kitsune.util.formatDate
 import io.github.drumber.kitsune.util.logE
 import io.github.drumber.kitsune.util.toDate
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 
 /**
  * Registers the profile / settings / WebView area destinations into the Compose [NavHost].
@@ -138,9 +139,8 @@ import org.koin.core.parameter.parametersOf
  */
 @Suppress("LongMethod")
 fun NavGraphBuilder.profileGraph(navController: NavHostController) {
-
-    composable<Routes.MyProfile> {
-        MyProfileDestination(navController)
+    composable<Routes.MyProfile> { entry ->
+        MyProfileDestination(entry, navController)
     }
 
     composable<Routes.UserProfile>(
@@ -150,12 +150,12 @@ fun NavGraphBuilder.profileGraph(navController: NavHostController) {
         )
     ) { entry ->
         val route = entry.toRoute<Routes.UserProfile>()
-        UserProfileDestination(navController, route.userId, route.userName)
+        UserProfileDestination(entry, navController, route.userId, route.userName)
     }
 
     composable<Routes.FollowList> { entry ->
         val route = entry.toRoute<Routes.FollowList>()
-        FollowListDestination(navController, route.userId, route.followListType(), route.userName)
+        FollowListDestination(navController, route.userId, route.followListType())
     }
 
     composable<Routes.EditProfile> {
@@ -188,7 +188,10 @@ fun NavGraphBuilder.profileGraph(navController: NavHostController) {
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun MyProfileDestination(navController: NavHostController) {
+private fun MyProfileDestination(
+    backStackEntry: NavBackStackEntry,
+    navController: NavHostController
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val viewModel: MyProfileViewModel = koinViewModel()
@@ -200,6 +203,11 @@ private fun MyProfileDestination(navController: NavHostController) {
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var selectedCharacterId by remember { mutableStateOf<String?>(null) }
+    val postCreatedRefresh = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
+
+    backStackEntry.NavResultEffect<Boolean>(NavResults.POST_CREATED) {
+        postCreatedRefresh.tryEmit(Unit)
+    }
 
     if (showLogoutDialog) {
         LogoutConfirmationDialog(
@@ -248,7 +256,8 @@ private fun MyProfileDestination(navController: NavHostController) {
                 userId = user?.id,
                 feedKey = "my_profile_feed",
                 scrollState = scrollState,
-                navController = navController
+                navController = navController,
+                postCreatedRefresh = postCreatedRefresh
             )
         },
         onShareProfile = {
@@ -326,6 +335,7 @@ private fun MyProfileAboutTab(
 
 @Composable
 private fun UserProfileDestination(
+    backStackEntry: NavBackStackEntry,
     navController: NavHostController,
     userId: String,
     userName: String?
@@ -338,7 +348,12 @@ private fun UserProfileDestination(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val scrollToTopEvents = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
+    val postCreatedRefresh = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
     var selectedCharacterId by remember { mutableStateOf<String?>(null) }
+
+    backStackEntry.NavResultEffect<Boolean>(NavResults.POST_CREATED) {
+        postCreatedRefresh.tryEmit(Unit)
+    }
 
     if (selectedCharacterId != null) {
         CharacterDetailsSheet(
@@ -383,7 +398,8 @@ private fun UserProfileDestination(
                 userId = user?.id ?: userId,
                 feedKey = "user_profile_feed",
                 scrollState = scrollState,
-                navController = navController
+                navController = navController,
+                postCreatedRefresh = postCreatedRefresh
             )
         },
         onShareProfile = {
@@ -459,7 +475,8 @@ private fun ProfileFeedTab(
     userId: String?,
     feedKey: String,
     scrollState: LazyListState,
-    navController: NavHostController
+    navController: NavHostController,
+    postCreatedRefresh: MutableSharedFlow<Unit>
 ) {
     if (userId == null) return
 
@@ -468,6 +485,12 @@ private fun ProfileFeedTab(
     LaunchedEffect(userId) { feedViewModel.setUserFeed(userId) }
 
     val posts = feedViewModel.dataSource.collectAsLazyPagingItems()
+    LaunchedEffect(postCreatedRefresh) {
+        postCreatedRefresh.collect {
+            posts.refresh()
+            feedViewModel.reloadPinnedPost()
+        }
+    }
     val pinnedPost by feedViewModel.pinnedPost.collectAsStateWithLifecycle()
     val loginRequired by feedViewModel.loginRequired.collectAsStateWithLifecycle(false)
     val interactionStates by feedViewModel.interactionStates.collectAsStateWithLifecycle(emptyMap())
@@ -559,8 +582,7 @@ private fun ProfileFeedTab(
 private fun FollowListDestination(
     navController: NavHostController,
     userId: String,
-    listType: FollowListType,
-    userName: String?
+    listType: FollowListType
 ) {
     val viewModel: FollowListViewModel = koinViewModel(
         parameters = { parametersOf(userId, listType) }
@@ -639,8 +661,8 @@ private fun EditProfileDestination(navController: NavHostController) {
 
     fun openImagePicker(type: ImagePickerType) {
         viewModel.currentImagePickerType = type
-        if (!KitsunePref.forceLegacyImagePicker
-            && ActivityResultContracts.PickVisualMedia.isPhotoPickerAvailable(context)
+        if (!KitsunePref.forceLegacyImagePicker &&
+            ActivityResultContracts.PickVisualMedia.isPhotoPickerAvailable(context)
         ) {
             pickImageLauncher.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -1171,7 +1193,6 @@ private fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Uni
 private fun NavHostController.navigateToMediaDetails(media: Media) {
     navigateSafe(Routes.Details(mediaId = media.id, isAnime = media is Anime))
 }
-
 
 private fun android.content.Context.shareUrl(url: String) {
     startActivity(
